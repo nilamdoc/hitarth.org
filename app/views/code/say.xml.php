@@ -1,0 +1,1 @@
+<Response><Say voice="woman">Please enter GreenCoinX mobile phone verification code. <?=$newcode?>, I repeat <?=$newcode?>. Again! <?=$newcode?>.</Say></Response>
