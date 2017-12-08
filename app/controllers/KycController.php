@@ -414,9 +414,6 @@ class KycController extends \lithium\action\Controller {
     return $this->render(array('json' => array('success'=>1,
     'now'=>time(),
     'error'=>'Data saved!',
-    'hash'=>md5("nilamdoc@gmail.com"),
-    'hash1'=>md5("nilamdoc@gmail.com"),
-    'hash2'=>md5("nilamdoc@gmail.com"),
     ))); 
     
    }else{
