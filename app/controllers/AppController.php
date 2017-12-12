@@ -240,7 +240,7 @@ class AppController extends \lithium\action\Controller {
       return $this->render(array('json' => array('success'=>1,
         'now'=>time(),
         'result'=>'Current unit',
-        'pin'=> $unit
+        'unit'=> $unit
       )));
     }else{
       return $this->render(array('json' => array('success'=>0,
@@ -280,7 +280,7 @@ class AppController extends \lithium\action\Controller {
       return $this->render(array('json' => array('success'=>1,
         'now'=>time(),
         'result'=>'Update unit',
-        'pin'=> $unit
+        'unit'=> $unit
       )));
     }else{
       return $this->render(array('json' => array('success'=>0,
