@@ -1,4 +1,10 @@
 <?php
+
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+// error_reporting(E_ALL);
+
+
 namespace app\controllers;
 use app\models\Wallets;
 use app\models\Apps;
@@ -13,14 +19,16 @@ use app\extensions\action\Functions;
 use app\extensions\action\Coingreen;
 
 class AppController extends \lithium\action\Controller {
-	public function index($ip = null){
-  if($ip == null || $ip == ""){
-   return $this->render(array('json' => array('success'=>0,
-   'now'=>time(),
-   'error'=>'IP missing!'
-		)));
-  }
+	
+  public function index($ip = null){
+    if($ip == null || $ip == ""){
+     return $this->render(array('json' => array('success'=>0,
+     'now'=>time(),
+     'error'=>'IP missing!'
+  		)));
+    }
 	}
+
 	public function initialize($ip = null,$device_type=null,$os_version=null,$device_name=null){
   
    if($this->request->data){
@@ -56,15 +64,15 @@ class AppController extends \lithium\action\Controller {
     }    
     $key = md5(time());
     $data = array(
-    'device_type'=>$this->request->data['device_type'],
-    'os_version'=>$this->request->data['os_version'],
-    'device_name'=>$this->request->data['device_name'],
-    'vendor_uuid'=>$this->request->data['vendor_uuid'],
-    'DateTime' => new \MongoDate(),
-    'IP' => $this->request->data['ip'],
-    'key' => $key,
-				'Server'=>md5($_SERVER["SERVER_ADDR"]),
-				'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+      'device_type'=>$this->request->data['device_type'],
+      'os_version'=>$this->request->data['os_version'],
+      'device_name'=>$this->request->data['device_name'],
+      'vendor_uuid'=>$this->request->data['vendor_uuid'],
+      'DateTime' => new \MongoDate(),
+      'IP' => $this->request->data['ip'],
+      'key' => $key,
+  		'Server'=>md5($_SERVER["SERVER_ADDR"]),
+  		'Refer'=>md5($_SERVER["REMOTE_ADDR"])
     );
     $App = Apps::create()->save($data);
     return $this->render(array('json' => array('success'=>1,
@@ -79,138 +87,137 @@ class AppController extends \lithium\action\Controller {
     'now'=>time(),
     'error'=>'IP missing!'
    )));
+   }
   }
- }
  
- public function setpin($key=null){
-  if ($key==null || $key == ""){
-    return $this->render(array('json' => array('success'=>0,
-    'now'=>time(),
-    'error'=>'Key missing!'
-   )));
-  }
-  
-  if($this->request->data){
-    if($this->request->data['pin']==null || $this->request->data['pin']==""){
-     return $this->render(array('json' => array('success'=>0,
+  public function setpin($key=null){
+    if ($key==null || $key == ""){
+      return $this->render(array('json' => array('success'=>0,
+      'now'=>time(),
+      'error'=>'Key missing!'
+     )));
+    }
+    
+    if($this->request->data){
+      if($this->request->data['pin']==null || $this->request->data['pin']==""){
+       return $this->render(array('json' => array('success'=>0,
+        'now'=>time(),
+        'error'=>'Pin missing!'
+       )));
+      }
+     
+     $data = array(
+       'pin' => $this->request->data['pin']
+       );
+     $conditions = array(
+       'key' => $key 
+     );
+     
+     Apps::update($data,$conditions);
+      return $this->render(array('json' => array('success'=>1,
+       'now'=>time(),
+       'key'=>$key,
+       'Server'=>md5($_SERVER["SERVER_ADDR"]),
+       'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+      )));
+    }else{
+      return $this->render(array('json' => array('success'=>0,
       'now'=>time(),
       'error'=>'Pin missing!'
      )));
     }
-   
-   $data = array(
-     'pin' => $this->request->data['pin']
+  }
+ 
+  public function checkpin($key=null){
+    if ($key==null || $key == ""){
+      return $this->render(array('json' => array('success'=>0,
+      'now'=>time(),
+      'error'=>'Key missing!'
+     )));
+    }
+     $conditions = array(
+       'key' => $key 
      );
-   $conditions = array(
-     'key' => $key 
-   );
-   
-   Apps::update($data,$conditions);
-    return $this->render(array('json' => array('success'=>1,
-     'now'=>time(),
-     'key'=>$key,
-     'Server'=>md5($_SERVER["SERVER_ADDR"]),
-     'Refer'=>md5($_SERVER["REMOTE_ADDR"])
-    )));
-  }else{
-    return $this->render(array('json' => array('success'=>0,
-    'now'=>time(),
-    'error'=>'Pin missing!'
-   )));
-  }
- }
- 
- public function checkpin($key=null){
-  if ($key==null || $key == ""){
-    return $this->render(array('json' => array('success'=>0,
-    'now'=>time(),
-    'error'=>'Key missing!'
-   )));
-  }
-   $conditions = array(
-     'key' => $key 
-   );
-   
-   $record = Apps::find('first',array(
-    'conditions'=>$conditions
-   ));
-   if(count($record)!=0){
-    return $this->render(array('json' => array('success'=>1,
-     'now'=>time(),
-     'key'=>$key,
-     'pin'=>$record['pin'],
-     'Server'=>md5($_SERVER["SERVER_ADDR"]),
-     'Refer'=>md5($_SERVER["REMOTE_ADDR"])
-    )));
-   }else{
-    return $this->render(array('json' => array('success'=>0,
-    'now'=>time(),
-    'error'=>'Invalid Key!'
-   )));    
-   }
- }
- 
- public function changePin($key = null)
- {
-  if ($key==null || $key == ""){
-    return $this->render(array('json' => array('success'=>0,
-    'now'=>time(),
-    'error'=>'Key missing!'
-   )));
-  }
-  if($this->request->data){
-      if($this->request->data['pin']==null || $this->request->data['pin']==""){
-      return $this->render(array('json' => array('success'=>0,
-        'now'=>time(),
-        'error'=>'Pin missing!'
+     
+     $record = Apps::find('first',array(
+      'conditions'=>$conditions
+     ));
+     if(count($record)!=0){
+      return $this->render(array('json' => array('success'=>1,
+       'now'=>time(),
+       'key'=>$key,
+       'pin'=>$record['pin'],
+       'Server'=>md5($_SERVER["SERVER_ADDR"]),
+       'Refer'=>md5($_SERVER["REMOTE_ADDR"])
       )));
-      }
-      if($this->request->data['new_pin']==null || $this->request->data['new_pin']==""){
+     }else{
       return $this->render(array('json' => array('success'=>0,
-        'now'=>time(),
-        'error'=>'New Pin missing!'
-      )));
-      }
-
-      if(strlen($this->request->data['new_pin']) != 4){
-        return $this->render(array('json' => array('success'=>0,
-          'now'=>time(),
-          'error'=>'New pin must be 4 number!'
-        )));
+      'now'=>time(),
+      'error'=>'Invalid Key!'
+     )));    
+     }
+  }
+ 
+  public function changePin($key = null){
+    if ($key==null || $key == ""){
+      return $this->render(array('json' => array('success'=>0,
+      'now'=>time(),
+      'error'=>'Key missing!'
+     )));
+    }
+    if($this->request->data){
+        if($this->request->data['pin']==null || $this->request->data['pin']==""){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Pin missing!'
+          )));
+        }
+          if($this->request->data['new_pin']==null || $this->request->data['new_pin']==""){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'New Pin missing!'
+          )));
         }
 
-      if($this->request->data['pin'] == $this->request->data['new_pin']){
-        return $this->render(array('json' => array('success'=>0,
-          'now'=>time(),
-          'error'=>'New Pin same as current pin'
-        )));
-        }
-      
-        $record = Apps::find('first',array(
-          'conditions' => array(
-            'key'=>$key,
-            'pin'=>$this->request->data['pin'] )
-        )
-      );
-      if(count($record) > 0){
-        $data = array('pin' => $this->request->data['new_pin']);
-        $conditions =  array(
-          'key'=>$key,
-          'pin'=>$this->request->data['pin'] 
+        if(strlen($this->request->data['new_pin']) != 4){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'New pin must be 4 number!'
+          )));
+          }
+
+        if($this->request->data['pin'] == $this->request->data['new_pin']){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'New Pin same as current pin'
+          )));
+          }
+        
+          $record = Apps::find('first',array(
+            'conditions' => array(
+              'key'=>$key,
+              'pin'=>$this->request->data['pin'] )
+          )
         );
-        Apps::update($data, $conditions);
-        return $this->render(array('json' => array('success'=>1,
-        'now'=>time(),
-        'result'=>'New Pin updated',
-        'pin'=> $this->request->data['new_pin']
-      )));
-    }
-    else{ 
-      return $this->render(array('json' => array('success'=>0,
-        'now'=>time(),
-        'error'=>'Old Pin does not match',
-      )));
-    }
+        if(count($record) > 0){
+          $data = array('pin' => $this->request->data['new_pin']);
+          $conditions =  array(
+            'key'=>$key,
+            'pin'=>$this->request->data['pin'] 
+          );
+          Apps::update($data, $conditions);
+          return $this->render(array('json' => array('success'=>1,
+            'now'=>time(),
+            'result'=>'New Pin updated',
+            'pin'=> $this->request->data['new_pin']
+          )));
+        }
+        else{ 
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Old Pin does not match',
+          )));
+        }
     }
   }
 
@@ -249,8 +256,8 @@ class AppController extends \lithium\action\Controller {
       )));
     }
   }
-  public function updateCurrencyUnit($key = null)
-  {
+
+  public function updateCurrencyUnit($key = null){
     if ($key==null || $key == ""){
       return $this->render(array('json' => array('success'=>0,
       'now'=>time(),
@@ -290,8 +297,7 @@ class AppController extends \lithium\action\Controller {
     }
   }
   
-  public function checkEmailNotification($key = null)
-  {
+  public function checkEmailNotification($key = null){
     if ($key==null || $key == ""){
       return $this->render(array('json' => array('success'=>0,
       'now'=>time(),
@@ -326,8 +332,7 @@ class AppController extends \lithium\action\Controller {
     }         
   }
     
-  public function updateEmailNotification($key = null)
-  {
+  public function updateEmailNotification($key = null){
     if ($key==null || $key == ""){
       return $this->render(array('json' => array('success'=>0,
       'now'=>time(),
@@ -367,8 +372,7 @@ class AppController extends \lithium\action\Controller {
     }
   }
   
-  public function checkSmsNotification($key = null)
-  {
+  public function checkSmsNotification($key = null){
     if ($key==null || $key == ""){
       return $this->render(array('json' => array('success'=>0,
       'now'=>time(),
@@ -403,8 +407,7 @@ class AppController extends \lithium\action\Controller {
     }  
   }
     
-  public function updateSmsNotification($key = null)
-  {
+  public function updateSmsNotification($key = null){
     if ($key==null || $key == ""){
       return $this->render(array('json' => array('success'=>0,
       'now'=>time(),
@@ -444,6 +447,191 @@ class AppController extends \lithium\action\Controller {
     }
   }
 
+  public function changeWalletName($key = null){
+      if ($key==null || $key == ""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Key missing!'
+        )));
+      }
+
+      if ($this->request->data['walletid']==null || $this->request->data['walletid'] == ""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'wallet id missing!'
+        )));
+      }
+
+      if ($this->request->data['walletName']==null || $this->request->data['walletName'] == ""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'wallet name missing!'
+        )));
+      }
+
+      $record = Apps::find('first',array(
+          'conditions' => array(
+              'key'=>$key
+          )
+        )
+      );
+
+      if(count($record) > 0){
+          $walletid = $this->request->data['walletid'];
+          $walletName = $this->request->data['walletName'];
+          
+           $update = array(); 
+           foreach ($record['wallets'] as $wkey => $wallet) {        
+              if($wallet['walletid'] == $walletid){
+                $update[$wkey]['walletid'] = $walletid;
+                $update[$wkey]['walletName'] = $walletName;
+              }else{
+                $update[$wkey]['walletid'] = $wallet['walletid'];
+                $update[$wkey]['walletName'] = $wallet['walletName'];
+              }             
+           } 
+
+           $data = array('wallets' => $update);
+           $conditions = array('key' => $key);
+           Apps::update($data, $conditions);
+
+           return $this->render(array('json' => array('success'=>1,
+             'now'=>time(),
+             'result'=>'Wallet name updated',
+             'walletid'=> $walletid
+          )));
+
+
+      }else{
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Key does not match',
+        )));
+      }
+  }
+
+  public function changeWalletPassword($key = null){
+      if ($key==null || $key == ""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Key missing!'
+        )));
+      }
+
+      if ($this->request->data['walletid']==null || $this->request->data['walletid'] == ""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'wallet id missing!'
+        )));
+      }
+
+      if ($this->request->data['walletName']==null || $this->request->data['walletName'] == ""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'wallet name missing!'
+        )));
+      }
+
+      $record = Apps::find('first',array(
+          'conditions' => array(
+              'key'=>$key
+          )
+        )
+      );
+
+      if(count($record) > 0){
+          $walletid  = $this->request->data['walletid'];
+          $walletName  = $this->request->data['walletName'];
+          $password  = $this->request->data['password'];
+          $new_password  = $this->request->data['new_password'];
+          
+           $update = array(); 
+
+           // check all wallets record 
+           foreach ($record['wallets'] as $wkey => $wallet) {        
+              // check wallet given id exits or not
+              if($wallet['walletid'] == $walletid){
+
+                    if(!empty($wallet['walletPassword'])){
+
+                        if ($this->request->data['password']==null || $this->request->data['password'] == ""){
+                          return $this->render(array('json' => array('success'=>0,
+                            'now'=>time(),
+                            'error'=>'old password id missing!'
+                          )));
+                        }
+
+                        if ($this->request->data['new_password']==null || $this->request->data['new_password'] == ""){
+                          return $this->render(array('json' => array('success'=>0,
+                            'now'=>time(),
+                            'error'=>'new password id missing!'
+                          )));
+                        }
+
+                        // check New and old password not same
+                        if ($this->request->data['password'] == $this->request->data['new_password']){
+                          return $this->render(array('json' => array('success'=>0,
+                            'now'=>time(),
+                            'error'=>'New password same as old password!'
+                          )));
+                        }
+
+                        // check password old 
+                        if(password_verify($password, $wallet['walletPassword'])) { 
+                            // check New Password Regular exprestion 
+                            //$string = "abcD@123";
+                            $regex = "/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$%^&]).*$/";
+                            if (preg_match($regex, $new_password)) {
+                                 // create Password
+                                 $update[$wkey]['walletPassword'] = password_hash($new_password, PASSWORD_BCRYPT);
+                            }else{
+                               return $this->render(array('json' => array('success'=>0,
+                                  'now'=>time(),
+                                  'error'=>'new password contains at least one char, numeric or special like @ $ % ^ &'
+                                )));
+                            }
+                        }else{
+                          return $this->render(array('json' => array('success'=>0,
+                            'now'=>time(),
+                            'error'=>'old password wrong!'
+                          )));
+                        }
+
+                    }else{
+                      $update[$wkey]['walletPassword'] = password_hash($new_password, PASSWORD_BCRYPT);
+                    }
+
+                    $update[$wkey]['walletid'] = $walletid;
+                    $update[$wkey]['walletName'] = $walletName;
+              }
+              else
+              {
+                  // Remaing Record set field
+                  foreach ($wallet as $k => $v) {
+                    $update[$wkey][$k] = $v;
+                  }
+              }  
+           } 
+
+
+            $data = array('wallets' => $update);
+            $conditions = array('key' => $key);
+            Apps::update($data, $conditions);
+
+            return $this->render(array('json' => array('success'=>1,
+              'now'=>time(),
+              'result'=>'Wallet Password updated',
+              'walletid'=> $walletid
+            )));
+
+
+      }else{
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Key does not match',
+        )));
+      }
+  }
 
 }
 ?>
