@@ -480,17 +480,29 @@ class AppController extends \lithium\action\Controller {
           $walletid = $this->request->data['walletid'];
           $walletName = $this->request->data['walletName'];
           
+           $changeWalletName = false;
            $update = array(); 
            foreach ($record['wallets'] as $wkey => $wallet) {        
               if($wallet['walletid'] == $walletid){
-                $update[$wkey]['walletid'] = $walletid;
+                $changeWalletName = true;
+                
+                // get first all filed after update
+                foreach ($wallet as $k => $v) {
+                    $update[$wkey][$k] = $v;
+                }
                 $update[$wkey]['walletName'] = $walletName;
               }else{
-                $update[$wkey]['walletid'] = $wallet['walletid'];
-                $update[$wkey]['walletName'] = $wallet['walletName'];
+                // Remaing Record set field
+                  foreach ($wallet as $k => $v) {
+                    $update[$wkey][$k] = $v;
+                  }
               }             
            } 
 
+           // echo "<pre>";
+           // print_r($update);
+           // exit();
+        if($changeWalletName){   
            $data = array('wallets' => $update);
            $conditions = array('key' => $key);
            Apps::update($data, $conditions);
@@ -500,6 +512,12 @@ class AppController extends \lithium\action\Controller {
              'result'=>'Wallet name updated',
              'walletid'=> $walletid
           )));
+        }else{
+           return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Wallet id does not match',
+          )));
+        }   
 
 
       }else{
@@ -525,12 +543,12 @@ class AppController extends \lithium\action\Controller {
         )));
       }
 
-      if ($this->request->data['walletName']==null || $this->request->data['walletName'] == ""){
-        return $this->render(array('json' => array('success'=>0,
-          'now'=>time(),
-          'error'=>'wallet name missing!'
-        )));
-      }
+      // if ($this->request->data['walletName']==null || $this->request->data['walletName'] == ""){
+      //   return $this->render(array('json' => array('success'=>0,
+      //     'now'=>time(),
+      //     'error'=>'wallet name missing!'
+      //   )));
+      // }
 
       $record = Apps::find('first',array(
           'conditions' => array(
@@ -541,16 +559,21 @@ class AppController extends \lithium\action\Controller {
 
       if(count($record) > 0){
           $walletid  = $this->request->data['walletid'];
-          $walletName  = $this->request->data['walletName'];
+          //$walletName  = $this->request->data['walletName'];
           $password  = $this->request->data['password'];
           $new_password  = $this->request->data['new_password'];
           
            $update = array(); 
-
+           $changeWalletPassword = false;
            // check all wallets record 
            foreach ($record['wallets'] as $wkey => $wallet) {        
               // check wallet given id exits or not
               if($wallet['walletid'] == $walletid){
+                   $changeWalletPassword = true;                 
+                    // get first all filed after update
+                    foreach ($wallet as $k => $v) {
+                        $update[$wkey][$k] = $v;
+                    }
 
                     if(!empty($wallet['walletPassword'])){
 
@@ -575,7 +598,6 @@ class AppController extends \lithium\action\Controller {
                             'error'=>'New password same as old password!'
                           )));
                         }
-
                         // check password old 
                         if(password_verify($password, $wallet['walletPassword'])) { 
                             // check New Password Regular exprestion 
@@ -600,9 +622,6 @@ class AppController extends \lithium\action\Controller {
                     }else{
                       $update[$wkey]['walletPassword'] = password_hash($new_password, PASSWORD_BCRYPT);
                     }
-
-                    $update[$wkey]['walletid'] = $walletid;
-                    $update[$wkey]['walletName'] = $walletName;
               }
               else
               {
@@ -613,7 +632,7 @@ class AppController extends \lithium\action\Controller {
               }  
            } 
 
-
+          if($changeWalletPassword){
             $data = array('wallets' => $update);
             $conditions = array('key' => $key);
             Apps::update($data, $conditions);
@@ -623,6 +642,12 @@ class AppController extends \lithium\action\Controller {
               'result'=>'Wallet Password updated',
               'walletid'=> $walletid
             )));
+          }else{
+             return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'Wallet id does not match',
+            )));
+          }  
 
 
       }else{
