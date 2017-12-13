@@ -658,5 +658,152 @@ class AppController extends \lithium\action\Controller {
       }
   }
 
+  public function checkWalletCurrency($key = null){
+    if ($key==null || $key == ""){
+      return $this->render(array('json' => array('success'=>0,
+      'now'=>time(),
+      'error'=>'Key missing!'
+      )));
+    }
+
+    if ($this->request->data['walletid']==null || $this->request->data['walletid'] == ""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'wallet id missing!'
+        )));
+      }
+
+    $record = Apps::find('first',array(
+      'conditions' => array(
+        'key'=>$key
+        )
+      )
+    );
+  
+    $walletCurrency = '';
+    if(count($record) > 0){
+        $update = array();
+        $walletid  = $this->request->data['walletid'];
+
+        foreach ($record['wallets'] as $wkey => $wallet) {        
+          // get first all filed after update
+          foreach ($wallet as $k => $v) {
+              $update[$wkey][$k] = $v;
+          }  
+
+          if($wallet['walletid'] == $walletid){
+              if($wallet['walletCurrency '] == null){
+                  $walletCurrency = 'XGC';
+                  $update[$wkey]['walletCurrency '] = $walletCurrency; 
+              }else{
+                $walletCurrency = $wallet['walletCurrency '];
+              } 
+          }  
+        }
+
+        if(!empty($walletCurrency))
+        {
+           $data = array('wallets' => $update);
+           $conditions = array('key' => $key);
+           Apps::update($data, $conditions); 
+
+           return $this->render(array('json' => array('success'=>1,
+              'now'=>time(),
+              'result'=>'Wallet currency',
+              'walletid '=> $walletid,
+              'walletCurrency '=> $walletCurrency
+            )));
+        }else{
+             return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'Wallet id does not match',
+            )));
+        } 
+
+
+    }else{
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Key does not match',
+        )));
+    }
+  }
+
+  public function updateWalletCurrency($key = null){
+    if ($key==null || $key == ""){
+      return $this->render(array('json' => array('success'=>0,
+      'now'=>time(),
+      'error'=>'Key missing!'
+      )));
+    }
+
+    if ($this->request->data['walletid']==null || $this->request->data['walletid'] == ""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'wallet id missing!'
+        )));
+    }
+
+    if ($this->request->data['walletCurrency']==null || $this->request->data['walletCurrency'] == ""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'wallet currency missing!'
+        )));
+    }  
+
+    $record = Apps::find('first',array(
+      'conditions' => array(
+        'key'=>$key
+        )
+      )
+    );
+  
+    $updateCurrency = false;
+    if(count($record) > 0){
+        $update = array();
+        $walletid  = $this->request->data['walletid'];
+        $walletCurrency  = $this->request->data['walletCurrency'];
+
+        foreach ($record['wallets'] as $wkey => $wallet) {        
+          // get first all filed after update
+          foreach ($wallet as $k => $v) {
+              $update[$wkey][$k] = $v;
+          }  
+
+          if($wallet['walletid'] == $walletid){
+              $updateCurrency = true;
+              $update[$wkey]['walletCurrency '] = $walletCurrency;  
+          }  
+        }
+
+        if($updateCurrency)
+        {
+           $data = array('wallets' => $update);
+           $conditions = array('key' => $key);
+           Apps::update($data, $conditions); 
+
+           return $this->render(array('json' => array('success'=>1,
+              'now'=>time(),
+              'result'=>'Wallet update currency',
+              'walletid '=> $walletid,
+              'walletCurrency '=> $walletCurrency
+            )));
+        }else{
+             return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'Wallet id does not match',
+            )));
+        } 
+
+
+    }else{
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Key does not match',
+        )));
+    }
+  }
+
+
 }
 ?>
