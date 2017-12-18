@@ -521,8 +521,8 @@ class KycController extends \lithium\action\Controller {
              case 'aadhar':
                $this->kycAadharInfo($key,$kyc);
                break;
-             case 'texation':
-               $this->kycTexationInfo($key,$kyc);
+             case 'taxation':
+               $this->kycTaxationInfo($key,$kyc);
                break;
              case 'drivinglicence':
                $this->kycDrivingLicenceInfo($key,$kyc);
@@ -958,7 +958,7 @@ class KycController extends \lithium\action\Controller {
     }
 
     //Step5
-    private function kycTexationInfo($key,$kyc){
+    private function kycTaxationInfo($key,$kyc){
         
         if($this->request->data['firstName']==null || $this->request->data['firstName']=="") {
            return $this->render(array('json' => array('success'=>0,
