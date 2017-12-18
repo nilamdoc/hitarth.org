@@ -560,7 +560,7 @@ class KycController extends \lithium\action\Controller {
         if($this->request->data['lastname']==null || $this->request->data['lastname']=="") {
            return $this->render(array('json' => array('success'=>0,
             'now'=>time(),
-            'error'=>'First Name Required!'
+            'error'=>'Last Name Required!'
            )));
         } 
 
@@ -624,7 +624,7 @@ class KycController extends \lithium\action\Controller {
         if($this->request->data['address']==null || $this->request->data['address']=="") {
            return $this->render(array('json' => array('success'=>0,
             'now'=>time(),
-            'error'=>'Address1 Required!'
+            'error'=>'Address Required!'
            )));
         } 
 
@@ -747,7 +747,7 @@ class KycController extends \lithium\action\Controller {
         if($this->request->data['address']==null || $this->request->data['address']=="") {
            return $this->render(array('json' => array('success'=>0,
             'now'=>time(),
-            'error'=>'Address1 Required!'
+            'error'=>'Address Required!'
            )));
         } 
 
@@ -911,7 +911,7 @@ class KycController extends \lithium\action\Controller {
       
 
         extract($this->request->data);  
-        $middleName = ($middleName !== '') ? '' : $middleName;
+        $middleName = ($middleName == '') ? '' : $middleName;
 
             if(isset($this->request->data['file'])){
              
