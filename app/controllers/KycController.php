@@ -176,98 +176,91 @@ class KycController extends \lithium\action\Controller {
         'error'=>'Key missing!'
        )));
       }else{
-       $conditions = array(
-        'key' => $key 
-       );
-       $record = Apps::find('first',array(
-        'conditions'=>$conditions
-       ));
-       
-       if(count($record)!=0){
-        $data = array(
-         'process'=>'email verify'
-        );
-        Apps::update($data,$conditions);
-        if($this->request->data){
-         if($this->request->data['email']){
-          $email = strtolower($this->request->data['email']);
-          $uuid = new Uuid();
-          $emails = kycDocuments::find('first',array(
-           'conditions'=>array('email'=>$email)
-          ));
-          $data = array(
-           'email' => strtolower($this->request->data['email']),
-           'hash'=>md5(strtolower($this->request->data['email']))
-          );
-          $conditions = array(
-           'key' => $key 
-          );
-          Apps::update($data,$conditions);
+           $conditions = array('key' => $key);
+           $record = Apps::find('first',array('conditions'=>$conditions));
+           
+           if(count($record)!=0){
+            $data = array('process'=>'email verify');
+            Apps::update($data,$conditions);
 
-         if(count($emails)===0){
-          $kyc_id = $uuid->v4v();
-          $email_code = substr($kyc_id,0,4);
-          $data = array(
-           'kyc_id'=>$kyc_id,
-           'email_code'=>$email_code,
-           'email'=>$email,
-           'hash'=>md5($email),
-           // 'details' => [],
-           // 'address' => [],
-           // 'driving' => [],
-           // 'passport' => [],
-           // 'passport_face' =>[],
-           'IP'=>$_SERVER['REMOTE_ADDR']
-          );
-          $Documents = kycDocuments::create($data);
-          $saved = $Documents->save();
-         }else{
-          $emails = kycDocuments::find('first',array(
-    				   'conditions'=>array('email'=>$email)
-    			   ));
-    			   $kyc_id = $emails['kyc_id'];
-          $email_code = $emails['email_code'];
-          if($emails['Verify']['Score']>=80){
-            return $this->render(array('json' => array(
-             'success'=>0,
-             'reason'=>'Aleredy KYC complete'
-            )));	
+            if($this->request->data){
+               if($this->request->data['email']){
+
+                    $email = strtolower($this->request->data['email']);
+                    $uuid = new Uuid();
+                    $emails = kycDocuments::find('first',array(
+                     'conditions'=>array('email'=>$email)
+                    ));
+                    $data = array(
+                     'email' => strtolower($this->request->data['email']),
+                     'hash'=>md5(strtolower($this->request->data['email']))
+                    );
+                    $conditions = array(
+                     'key' => $key 
+                    );
+                    Apps::update($data,$conditions);
+
+                     if(count($emails)===0){
+                        $kyc_id = $uuid->v4v();
+                        $email_code = substr($kyc_id,0,4);
+                        $data = array(
+                         'kyc_id'=>$kyc_id,
+                         'email_code'=>$email_code,
+                         'email'=>$email,
+                         'hash'=>md5($email),
+                         'IP'=>$_SERVER['REMOTE_ADDR']
+                        );
+                        $Documents = kycDocuments::create($data);
+                        $saved = $Documents->save();
+                     }else{
+                      $emails = kycDocuments::find('first',array(
+                				   'conditions'=>array('email'=>$email)
+                			   ));
+                		
+                        $kyc_id = $emails['kyc_id'];
+                        $email_code = $emails['email_code'];
+                        if($emails['Verify']['Score']>=80){
+                          return $this->render(array('json' => array(
+                           'success'=>0,
+                           'error'=>'Aleredy KYC complete'
+                          )));	
+                         }
+                     }
+
+
+                 ////////////////////////////////////////Send Email
+            				$emaildata = array(
+            					'kyc_id'=>$email_code,
+            					'email'=>$email
+            				);
+            				$function = new Functions();
+            				$compact = array('data'=>$emaildata);
+            				$from = array(NOREPLY => "noreply@".COMPANY_URL);
+            				$email = $email;
+            				$function->sendEmailTo($email,$compact,'process','sendKYC',"KYCGlobal - Email Code",$from,'','','',null);
+                 //////////////////////////////////////////////////////////////////////
+                 
+                    
+                 
+                   return $this->render(array('json' => array(
+                    'success'=>1,
+                    'email_code'=>$email_code,
+                		'Server'=>md5($_SERVER["SERVER_ADDR"]),
+                    'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+                   )));
+                 }
+              }else{
+                return $this->render(array('json' => array('success'=>0,
+                'now'=>time(),
+                'error'=>'No Email Specified!'
+                )));         
+              }
+           }else{
+              return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'Invalid Key!'
+              )));    
            }
-         }
-
-         ////////////////////////////////////////Send Email
-    				$emaildata = array(
-    					'kyc_id'=>$email_code,
-    					'email'=>$email
-    				);
-    				$function = new Functions();
-    				$compact = array('data'=>$emaildata);
-    				$from = array(NOREPLY => "noreply@".COMPANY_URL);
-    				$email = $email;
-    				$function->sendEmailTo($email,$compact,'process','sendKYC',"KYCGlobal - Email Code",$from,'','','',null);
-         //////////////////////////////////////////////////////////////////////
-         
-         
-         
-           return $this->render(array('json' => array(
-            'success'=>1,
-            'email_code'=>$email_code,
-        				'Server'=>md5($_SERVER["SERVER_ADDR"]),
-            'Refer'=>md5($_SERVER["REMOTE_ADDR"])
-           )));
-         }
-        }else{
-        return $this->render(array('json' => array('success'=>0,
-        'now'=>time(),
-        'error'=>'No Email Specified!'
-        )));         
-        }
-       }else{
-        return $this->render(array('json' => array('success'=>0,
-        'now'=>time(),
-        'error'=>'Invalid Key!'
-        )));    
-       }
       }
     }
 
@@ -280,30 +273,39 @@ class KycController extends \lithium\action\Controller {
       }else{
         if($this->request->data){
          if($this->request->data['code']){
-          $conditions = array('hash'=>$key,'email_code'=>$this->request->data['code']);
-          $find = kycDocuments::find('first',array(
-           'conditions' => $conditions
-          ));
-          if(count($find)===0){
-          return $this->render(array('json' => array('success'=>0,
-            'now'=>time(),
-            'error'=>'Code Invalid',
-        				'Server'=>md5($_SERVER["SERVER_ADDR"]),
-            'Refer'=>md5($_SERVER["REMOTE_ADDR"])
-            )));
-          }else{
-           return $this->render(array('json' => array('success'=>1,
-            'now'=>time(),
-            'error'=>'Code Valid',
-        				'Server'=>md5($_SERVER["SERVER_ADDR"]),
-            'Refer'=>md5($_SERVER["REMOTE_ADDR"])
-           )));
-          }
+            $record = Apps::find('first',array('conditions'=>array('key' => $key)));
+            if(count($record)!=0){
+                $conditions = array('hash'=>$record['hash'],'email_code'=>$this->request->data['code']);
+                $find = kycDocuments::find('first',array(
+                  'conditions' => $conditions
+                ));
+
+                if(count($find)===0){
+                  return $this->render(array('json' => array('success'=>0,
+                    'now'=>time(),
+                    'error'=>'Code Invalid',
+                		'Server'=>md5($_SERVER["SERVER_ADDR"]),
+                    'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+                    )));
+                }else{
+                 return $this->render(array('json' => array('success'=>1,
+                  'now'=>time(),
+                  'result'=>'Code Valid',
+              		'Server'=>md5($_SERVER["SERVER_ADDR"]),
+                  'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+                 )));
+                }
+            }else{
+              return $this->render(array('json' => array('success'=>0,
+                'now'=>time(),
+                'error'=>'Invalid Key!'
+              ))); 
+            }    
          }else{
            return $this->render(array('json' => array('success'=>0,
             'now'=>time(),
             'error'=>'Code Invalid',
-        				'Server'=>md5($_SERVER["SERVER_ADDR"]),
+        		'Server'=>md5($_SERVER["SERVER_ADDR"]),
             'Refer'=>md5($_SERVER["REMOTE_ADDR"])
             )));
                 
@@ -334,45 +336,54 @@ class KycController extends \lithium\action\Controller {
         );
         Apps::update($data,$conditions);   
        }else{
-        return $this->render(array('json' => array('success'=>0,
-        'now'=>time(),
-        'error'=>'Invalid Key!'
-        ))); 
-       }
-       if($this->request->data){
-        if($this->request->data['mobile']==null || $this->request->data['mobile']=="") {
-         return $this->render(array('json' => array('success'=>0,
+          return $this->render(array('json' => array('success'=>0,
           'now'=>time(),
-          'error'=>'Mobile number required!'
-         )));
-        }
-      		$ga = new GoogleAuthenticator();
-        $secret = $ga->createSecret(64);
-        $signinCode = $ga->getCode($secret);	
-        $function = new Functions();
-        $phone = $this->request->data['mobile'];
-        if(substr($phone,0,1)=='+'){
-        $phone = str_replace("+","",$phone);
-        }
-        $data = array(
-         'phone'=>$phone,
-         'phone_code'=>$signinCode,
-         
-        );
-        $conditions = array(
-         'key' => $key 
-        );
-        Apps::update($data,$conditions);   
-        $msg = 'Please enter GreenCoinX mobile verification code: '.$signinCode.'.';
-        $returnvalues = $function->twilio($phone,$msg,$signinCode);	 // Testing if it works 
-        return $this->render(array('json' => array('success'=>1,
-        'now'=>time(),
-        'phone_code'=>$signinCode,
-        'phone'=>$phone,
-    				'Server'=>md5($_SERVER["SERVER_ADDR"]),
-        'Refer'=>md5($_SERVER["REMOTE_ADDR"])
-       )));
+          'error'=>'Invalid Key!'
+          ))); 
        }
+
+       if($this->request->data){
+          if($this->request->data['mobile']==null || $this->request->data['mobile']=="") {
+           return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Mobile number required!'
+           )));
+          }
+
+          if($this->request->data['country_code']==null || $this->request->data['country_code']=="") {
+           return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Country code required!'
+           )));
+          }
+        	
+          $ga = new GoogleAuthenticator();
+          $secret = $ga->createSecret(64);
+          $signinCode = $ga->getCode($secret);	
+          $function = new Functions();
+          $phone = $this->request->data['mobile'];
+          if(substr($phone,0,1)=='+'){
+            $phone = str_replace("+","",$phone);
+          }
+          $data = array(
+           'phone'=>$phone,
+           'phone_code'=>$signinCode,
+          );
+          $conditions = array(
+           'key' => $key 
+          );
+          Apps::update($data,$conditions);   
+          $msg = 'Please enter GreenCoinX mobile verification code: '.$signinCode.'.';
+          $returnvalues = $function->twilio($phone,$msg,$signinCode);	 // Testing if it works 
+          
+            return $this->render(array('json' => array('success'=>1,
+              'now'=>time(),
+              'phone_code'=>$signinCode,
+              'phone'=>$phone,
+          		'Server'=>md5($_SERVER["SERVER_ADDR"]),
+              'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+             )));
+         }
       }
     }
 
@@ -434,110 +445,260 @@ class KycController extends \lithium\action\Controller {
       }
     }
     
+    
+    public function getStepStatus($key = null){
+
+
+
+      if($key==null || $key==""){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Key missing!'
+          )));
+      }else{  
+      
+        $record = Apps::find('first',array('conditions'=>array('key' => $key)));
+        if(count($record)!=0){
+          // $status = ['basic'=>0,'address'=>0,'passport'=>0,'aadhar'=>0,'taxation'=>0,'drivinglicence'=>0,'holdimg'=>0];
+          $kyc = kycDocuments::find('first',array('conditions'=>array('hash' => $record['hash'])))->to('array'); 
+            
+            if(!array_key_exists("step",$kyc)) {
+                $data = array(
+                    'step.issubmit' =>'n'   
+                );
+                $conditions = array('hash' =>$record['hash']);
+                KYCDocuments::update($data, $conditions);
+                $step = ['issubmit' => 'n'];   
+            }else{
+                $step = $kyc['step'];
+            }
+
+
+          return $this->render(array('json' => array('success'=>1,
+            'now'=>time(),
+            'result'=>'Step Status',
+            'step' => $step
+          )));  
+        }else{
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Invalid Key!'
+          ))); 
+        } 
+      }
+    }
+    
     /* get All Step Kyc info*/
     public function getKycDocument($key=null){
 
-    if($key==null || $key==""){
-        return $this->render(array('json' => array('success'=>0,
-          'now'=>time(),
-          'error'=>'Key missing!'
-        )));
-    }else{
-       $conditions = array(
-        'key' => $key 
-       );
-    
-       $record = Apps::find('first',array(
-        'conditions'=>$conditions
-       ));
-     
-       if(count($record)!=0){
-            $conditions = array(
-              'hash' => $key 
-             );
-          
-             $kyc = kycDocuments::find('first',array(
-              'conditions'=>$conditions
-             ));
-           
-             if(count($kyc)!=0){
-                 return $this->render(array('json' => array('success'=>1,
-                    'now'=>time(),
-                    'result'=>'Kyc Documents',
-                    'kyc'=> $kyc,
-                  )));
-             }else{
-                return $this->render(array('json' => array('success'=>0,
-                'now'=>time(),
-                'error'=>'not found kyc documents!'
-                ))); 
-             }
-       }else{
+      if($key==null || $key==""){
           return $this->render(array('json' => array('success'=>0,
-          'now'=>time(),
-          'error'=>'Invalid Key!'
-          ))); 
-       }
-    } 
+            'now'=>time(),
+            'error'=>'Key missing!'
+          )));
+      }
+      else if($this->request->data['step']==null || $this->request->data['step']==""){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'step name missing!'
+          )));    
+      }else{
+         $conditions = array('key' => $key);
+         $record = Apps::find('first',array('conditions'=>$conditions));
+       
+         if(count($record)!=0){
+              $kyc = kycDocuments::find('first',array('conditions'=>array('hash' => $record['hash'])));
+             
+               if(count($kyc)!=0){
+                  $step = $this->request->data['step'];
+                  switch ($step) {
+                     case 'basic':
+                       $this->getKycBasic($key,$kyc);
+                       break;
+                     case 'address':
+                       $this->getKycAddress($key,$kyc);
+                       break;
+                     case 'passport':
+                       $this->getKycPassport($key,$kyc);
+                       break;
+                     case 'aadhar':
+                       $this->getKycAadhar($key,$kyc);
+                       break;
+                     case 'taxation':
+                       $this->getKycTaxation($key,$kyc);
+                       break;
+                     case 'drivinglicence':
+                       $this->getKycDrivingLicence($key,$kyc);
+                       break;
+                     case 'holdimg':
+                       $this->getHoldingImg($key,$kyc);
+                       break;    
+                     default:
+                       return $this->render(array('json' => array('success'=>0,'now'=>time(),'error'=>'step name missing!'))); 
+                       break;
+                   }
+               }else{
+                  return $this->render(array('json' => array('success'=>0,
+                  'now'=>time(),
+                  'error'=>'not found kyc documents!'
+                  ))); 
+               } 
+         }else{
+            return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Invalid Key!'
+            ))); 
+         }
+      } 
+    }
+
+    private function getKycBasic($key,$kyc){
+      $path = $this->getImage($kyc['hash'],'profile_img');
+      return $this->render(array('json' => array('success'=>1,
+        'now'=>time(),
+        'result' => 'Basic Information',
+        'Name'  => $kyc['details']['Name'],
+        'Birth' => $kyc['details']['Birth'],
+        'profile_img' =>$path,
+        'key' => $key
+      ))); 
+    }
+
+    private function getKycAddress($key,$kyc){
+      $path = $this->getImage($kyc['hash'],'address_proof');
+      return $this->render(array('json' => array('success'=>1,
+        'now'=>time(),
+        'result'  => 'Address Information',
+        'Address' => $kyc['details']['Address'],
+        'address_proof' => $path,
+        'key'    => $key
+      ))); 
+    }
+
+    private function getKycPassport($key,$kyc){
+      $img = ['passport1' => '','passport2'=> '']; 
+      foreach ($img as $img_key => $value) {
+         $img[$img_key] = $this->getImage($kyc['hash'],$img_key);  
+      }
+     
+      return $this->render(array('json' => array('success'=>1,
+        'now'=>time(),
+        'result'  => 'Passport Information',
+        'Passport' => $kyc['details']['Passport'],
+        'passport1' => $img['passport1'],
+        'passport2' => $img['passport2'],
+        'key'    => $key
+      ))); 
+    }
+
+    private function getKycAadhar($key,$kyc){
+      $img = ['aadhar1' => '','aadhar2'=> '']; 
+      foreach ($img as $img_key => $value) {
+         $img[$img_key] = $this->getImage($kyc['hash'],$img_key);  
+      }
+     
+      return $this->render(array('json' => array('success'=>1,
+        'now'=>time(),
+        'result'  => 'Aadhar Information',
+        'Aadhar' => $kyc['details']['Aadhar'],
+        'aadhar1' => $img['aadhar1'],
+        'aadhar2' => $img['aadhar2'],
+        'key'    => $key
+      ))); 
+    }
+
+    private function getKycTaxation($key,$kyc){
+      $path = $this->getImage($kyc['hash'],'tax1');  
+      return $this->render(array('json' => array('success'=>1,
+        'now'=>time(),
+        'result'  => 'Tax Information',
+        'Tax' => $kyc['details']['Tax'],
+        'tax1' => $path,
+        'key'    => $key
+      ))); 
+    }
+
+    private function getKycDrivingLicence($key,$kyc){
+      $path = $this->getImage($kyc['hash'],'drivinglicence1');  
+      return $this->render(array('json' => array('success'=>1,
+        'now'=>time(),
+        'result'  => 'Driving Licence Information',
+        'Driving' => $kyc['details']['Driving'],
+        'drivinglicence1' => $path,
+        'hash'    => $key
+      ))); 
+    }    
+
+    private function getHoldingImg($key,$kyc){
+      $path = $this->getImage($kyc['hash'],'hold_img');  
+      return $this->render(array('json' => array('success'=>1,
+        'now'=>time(),
+        'result'  => 'Holding Image Information',
+        'hold_img' => $path,
+        'key'    => $key
+      ))); 
     }
 
     // General Function Calling App Site
     public function saveKycDocument($key=null){
     
-    if($key==null || $key==""){
-        return $this->render(array('json' => array('success'=>0,
-          'now'=>time(),
-          'error'=>'Key missing!'
-        )));
-    }
-    else if($this->request->data['step']==null || $this->request->data['step']==""){
-        return $this->render(array('json' => array('success'=>0,
-          'now'=>time(),
-          'error'=>'step name missing!'
-        )));    
-    }
-    else{
-      $record = Apps::find('first',array(
-          'conditions'=>array('key' => $key)
-        ));
-       
-      if(count($record)!=0){
-
-         $kyc = KYCDocuments::find('first',array(
-          'conditions'=>array('hash' => $key)
-         ));
-
-         $step = $this->request->data['step'];
-         switch ($step) {
-             case 'basic':
-               $this->kycBasicInfo($key,$kyc);
-               break;
-             case 'address':
-               $this->kycAddressInfo($key,$kyc);
-               break;
-             case 'passport':
-               $this->kycPassportInfo($key,$kyc);
-               break;
-             case 'aadhar':
-               $this->kycAadharInfo($key,$kyc);
-               break;
-             case 'taxation':
-               $this->kycTaxationInfo($key,$kyc);
-               break;
-             case 'drivinglicence':
-               $this->kycDrivingLicenceInfo($key,$kyc);
-               break;  
-             default:
-               echo "No Any Step";
-               break;
-           }      
-       }else{
+      if($key==null || $key==""){
           return $this->render(array('json' => array('success'=>0,
-          'now'=>time(),
-          'error'=>'Invalid Key!'
-          ))); 
-       }
-    } 
+            'now'=>time(),
+            'error'=>'Key missing!'
+          )));
+      }
+      else if($this->request->data['step']==null || $this->request->data['step']==""){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'step name missing!'
+          )));    
+      }
+      else{
+        $record = Apps::find('first',array(
+            'conditions'=>array('key' => $key)
+          ));
+         
+        if(count($record)!=0){
+
+           $kyc = KYCDocuments::find('first',array(
+            'conditions'=>array('hash' => $record['hash'])
+           ));
+
+           $step = $this->request->data['step'];
+           switch ($step) {
+               case 'basic':
+                 $this->kycBasicInfo($key,$kyc);
+                 break;
+               case 'address':
+                 $this->kycAddressInfo($key,$kyc);
+                 break;
+               case 'passport':
+                 $this->kycPassportInfo($key,$kyc);
+                 break;
+               case 'aadhar':
+                 $this->kycAadharInfo($key,$kyc);
+                 break;
+               case 'taxation':
+                 $this->kycTaxationInfo($key,$kyc);
+                 break;
+               case 'drivinglicence':
+                 $this->kycDrivingLicenceInfo($key,$kyc);
+                 break;
+               case 'holdimg':
+                 $this->kycHoldingImgInfo($key,$kyc);
+                 break;    
+               default:
+                 return $this->render(array('json' => array('success'=>0,'now'=>time(),'error'=>'step name missing!'))); 
+                 break;
+             }      
+         }else{
+            return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Invalid Key!'
+            ))); 
+         }
+      } 
     }
 
     //Step1
@@ -577,7 +738,7 @@ class KycController extends \lithium\action\Controller {
              
             foreach ($this->request->data['file'] as $img_key => $value) { 
             
-                $status = $this->upload($key,$img_key,$type[$img_key]);
+                $status = $this->upload($kyc['hash'],$img_key,$type[$img_key]);
 
                 if($status['upload'] == 0){
                    return $this->render(array('json' => array('success'=>0,
@@ -586,9 +747,16 @@ class KycController extends \lithium\action\Controller {
                    ))); 
                 }
             }
+        }else{
+          if(!$this->checkImageExits($kyc['hash'],'profile_img')){
+             return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'Profile Image Required!'
+             )));
+          }
         }
 
-            
+        
             $basic = array(
                 'first' => $firstname,
                 'middle' =>$middlename,
@@ -601,10 +769,11 @@ class KycController extends \lithium\action\Controller {
             
             $data = array(
                 'details.Name' => $basic,
-                'details.Birth' => $birth
+                'details.Birth' => $birth,
+                'step.basic.status' =>'pending'   
             );
             
-            $conditions = array('hash' => $key);
+            $conditions = array('hash' => $kyc['hash']);
             KYCDocuments::update($data, $conditions);
 
             return $this->render(array('json' => array('success'=>1,
@@ -614,7 +783,7 @@ class KycController extends \lithium\action\Controller {
               'middle' =>$middlename,
               'last' =>$lastname,
               'dob' => $dob,
-              'hash' => $key
+              'key' => $key
             ))); 
     }
 
@@ -667,20 +836,25 @@ class KycController extends \lithium\action\Controller {
 
             if(isset($this->request->data['file'])){
              
-              foreach ($this->request->data['file'] as $img_key => $value) { 
-              
-                  $status = $this->upload($key,$img_key,$type[$img_key]);
+                foreach ($this->request->data['file'] as $img_key => $value) { 
+                
+                    $status = $this->upload($kyc['hash'],$img_key,$type[$img_key]);
 
-                  if($status['upload'] == 0){
-                     return $this->render(array('json' => array('success'=>0,
-                      'now'=>time(),
-                      'error'=>$status['msg']
-                     ))); 
-                  }
+                    if($status['upload'] == 0){
+                       return $this->render(array('json' => array('success'=>0,
+                        'now'=>time(),
+                        'error'=>$status['msg']
+                       ))); 
+                    }
+                }
+            }else{
+              if(!$this->checkImageExits($kyc['hash'],'address_proof')){
+                 return $this->render(array('json' => array('success'=>0,
+                  'now'=>time(),
+                  'error'=>'Address Proof Required!'
+                 )));
               }
-          }
-
-
+            }
 
             $address_info = array(
                 'address' => $address,
@@ -691,13 +865,12 @@ class KycController extends \lithium\action\Controller {
                 'country' =>$country
               );
 
-           
-            
             $data = array(
-                'details.Address' => $address_info
+                'details.Address' => $address_info,
+                'step.address.status' =>'pending'
             );
             
-            $conditions = array('hash' => $key);
+            $conditions = array('hash' => $kyc['hash']);
             KYCDocuments::update($data, $conditions);
 
             return $this->render(array('json' => array('success'=>1,
@@ -709,7 +882,7 @@ class KycController extends \lithium\action\Controller {
                 'zip' =>$zip,
                 'state' =>$state,
                 'country' =>$country,
-                'hash' => $key
+                'key' => $key
             ))); 
     }
 
@@ -808,22 +981,42 @@ class KycController extends \lithium\action\Controller {
         }
 
     
-            extract($this->request->data);
-
+        extract($this->request->data);
+            $img = ['passport1','passport2'];
             if(isset($this->request->data['file'])){
-             
-              foreach ($this->request->data['file'] as $img_key => $value) { 
+                
+                $diff = array_values(array_diff($img, $type));
+              
+                if(count($diff) > 0){
+                  if(!$this->checkImageExits($kyc['hash'],$diff[0])){
+                     return $this->render(array('json' => array('success'=>0,
+                      'now'=>time(),
+                      'error'=>'Passport photos Required!'
+                     )));
+                  }
+                } 
+
+                foreach ($this->request->data['file'] as $img_key => $value) { 
                   if($this->request->data['file'][$img_key]['name'] != ''){
-                    $status = $this->upload($key,$img_key,$type[$img_key]);
-                    if($status['upload'] == 0){
-                       return $this->render(array('json' => array('success'=>0,
-                        'now'=>time(),
-                        'error'=>$status['msg']
-                       ))); 
-                    }
+                        $status = $this->upload($kyc['hash'],$img_key,$type[$img_key]);
+                        if($status['upload'] == 0){
+                           return $this->render(array('json' => array('success'=>0,
+                            'now'=>time(),
+                            'error'=>$status['msg']
+                           ))); 
+                        }
                   }  
+                }  
+            }else{
+              foreach ($img as $image) {
+                if(!$this->checkImageExits($kyc['hash'],$image)){
+                   return $this->render(array('json' => array('success'=>0,
+                    'now'=>time(),
+                    'error'=>'Passport photos Required!'
+                   )));
+                }
               }
-          }
+            }
 
 
 
@@ -846,18 +1039,19 @@ class KycController extends \lithium\action\Controller {
            
             
             $data = array(
-                'details.Passport' => $passport_info
+                'details.Passport' => $passport_info,
+                'step.passport.status' =>'pending'
             );
             
-            $conditions = array('hash' => $key);
+            $conditions = array('hash' => $kyc['hash']);
             KYCDocuments::update($data, $conditions);
 
             return $this->render(array('json' => array('success'=>1,
               'now'=>time(),
               'result'=>'Passport Information save success',
-                'firstname' => $address,
-                'middlename' => $address,
-                'lastname' => $address,
+                'firstname' => $firstname,
+                'middlename' => $middlename,
+                'lastname' => $lastname,
                 'dob' => $dob,
                 'address' => $address,
                 'street' =>$street,
@@ -868,7 +1062,7 @@ class KycController extends \lithium\action\Controller {
                 'no' =>$no,
                 'expiry' =>$expiry,
                 'pass_country' =>$pass_country,
-                'hash' => $key
+                'key' => $key
             ))); 
     }
 
@@ -913,18 +1107,39 @@ class KycController extends \lithium\action\Controller {
         extract($this->request->data);  
         $middleName = ($middleName == '') ? '' : $middleName;
 
+            $img = ['aadhar1','aadhar2'];
             if(isset($this->request->data['file'])){
-             
-              foreach ($this->request->data['file'] as $img_key => $value) { 
-                  if($this->request->data['file'][$img_key]['name'] != ''){
-                    $status = $this->upload($key,$img_key,$type[$img_key]);
-                    if($status['upload'] == 0){
-                       return $this->render(array('json' => array('success'=>0,
-                        'now'=>time(),
-                        'error'=>$status['msg']
-                       ))); 
-                    }
-                  }  
+              
+                $diff = array_values(array_diff($img, $type));
+                if(count($diff) > 0){
+                  if(!$this->checkImageExits($kyc['hash'],$diff[0])){
+                    return $this->render(array('json' => array('success'=>0,
+                      'now'=>time(),
+                      'error'=>'Aadhar photos Required!'
+                    )));  
+                  }
+                }  
+              
+                foreach ($this->request->data['file'] as $img_key => $value) { 
+                    if($this->request->data['file'][$img_key]['name'] != ''){
+                      $status = $this->upload($kyc['hash'],$img_key,$type[$img_key]);
+                      if($status['upload'] == 0){
+                         return $this->render(array('json' => array('success'=>0,
+                          'now'=>time(),
+                          'error'=>$status['msg']
+                         ))); 
+                      }
+                    }  
+                }
+                
+            }else{
+              foreach ($img as $image) {
+                if(!$this->checkImageExits($kyc['hash'],$image)){
+                   return $this->render(array('json' => array('success'=>0,
+                    'now'=>time(),
+                    'error'=>'Aadhar photos Required!'
+                   )));
+                }
               }
             }
 
@@ -940,10 +1155,11 @@ class KycController extends \lithium\action\Controller {
            
             
             $data = array(
-                'details.Aadhar' => $aadhar_info
+                'details.Aadhar' => $aadhar_info,
+                'step.aadhar.status' =>'pending'
             );
             
-            $conditions = array('hash' => $key);
+            $conditions = array('hash' => $kyc['hash']);
             KYCDocuments::update($data, $conditions);
 
             return $this->render(array('json' => array('success'=>1,
@@ -953,7 +1169,7 @@ class KycController extends \lithium\action\Controller {
                 'middleName' => $middleName,
                 'lastName' => $lastName,
                 'no' => $no,
-                'hash' => $key
+                'key' => $key
             ))); 
     }
 
@@ -1006,17 +1222,24 @@ class KycController extends \lithium\action\Controller {
         extract($this->request->data);  
         
             if(isset($this->request->data['file'])){
-             
-              foreach ($this->request->data['file'] as $img_key => $value) { 
-                  if($this->request->data['file'][$img_key]['name'] != ''){
-                    $status = $this->upload($key,$img_key,$type[$img_key]);
-                    if($status['upload'] == 0){
-                       return $this->render(array('json' => array('success'=>0,
-                        'now'=>time(),
-                        'error'=>$status['msg']
-                       ))); 
-                    }
-                  }  
+               
+                foreach ($this->request->data['file'] as $img_key => $value) { 
+                    if($this->request->data['file'][$img_key]['name'] != ''){
+                      $status = $this->upload($kyc['hash'],$img_key,$type[$img_key]);
+                      if($status['upload'] == 0){
+                         return $this->render(array('json' => array('success'=>0,
+                          'now'=>time(),
+                          'error'=>$status['msg']
+                         ))); 
+                      }
+                    }  
+                }
+            }else{
+              if(!$this->checkImageExits($kyc['hash'],'tax1')){
+                 return $this->render(array('json' => array('success'=>0,
+                  'now'=>time(),
+                  'error'=>'Tax Photos Required!'
+                 )));
               }
             }
 
@@ -1030,10 +1253,11 @@ class KycController extends \lithium\action\Controller {
 
           
             $data = array(
-                'details.Tax' => $tax
+                'details.Tax' => $tax,
+                'step.taxation.status' =>'pending'
             );
             
-            $conditions = array('hash' => $key);
+            $conditions = array('hash' => $kyc['hash']);
             KYCDocuments::update($data, $conditions);
 
             return $this->render(array('json' => array('success'=>1,
@@ -1044,7 +1268,7 @@ class KycController extends \lithium\action\Controller {
                 'lastName' => $lastName,
                 'dateofBirth'=> $dateofBirth,
                 'id'=> $id,
-                'hash' => $key
+                'key' => $key
             ))); 
     }
 
@@ -1147,18 +1371,25 @@ class KycController extends \lithium\action\Controller {
 
             if(isset($this->request->data['file'])){
              
-              foreach ($this->request->data['file'] as $img_key => $value) { 
-                  if($this->request->data['file'][$img_key]['name'] != ''){
-                    $status = $this->upload($key,$img_key,$type[$img_key]);
-                    if($status['upload'] == 0){
-                       return $this->render(array('json' => array('success'=>0,
-                        'now'=>time(),
-                        'error'=>$status['msg']
-                       ))); 
-                    }
-                  }  
+                foreach ($this->request->data['file'] as $img_key => $value) { 
+                    if($this->request->data['file'][$img_key]['name'] != ''){
+                      $status = $this->upload($kyc['hash'],$img_key,$type[$img_key]);
+                      if($status['upload'] == 0){
+                         return $this->render(array('json' => array('success'=>0,
+                          'now'=>time(),
+                          'error'=>$status['msg']
+                         ))); 
+                      }
+                    }  
+                }
+            }else{
+              if(!$this->checkImageExits($kyc['hash'],'drivinglicence1')){
+                 return $this->render(array('json' => array('success'=>0,
+                  'now'=>time(),
+                  'error'=>'Driving Licence Photos Required!'
+                 )));
               }
-          }
+            }
 
 
 
@@ -1181,10 +1412,11 @@ class KycController extends \lithium\action\Controller {
            
             
             $data = array(
-                'details.Driving' => $licence
+                'details.Driving' => $licence,
+                'step.drivinglicence.status' =>'pending'
             );
             
-            $conditions = array('hash' => $key);
+            $conditions = array('hash' => $kyc['hash']);
             KYCDocuments::update($data, $conditions);
 
             return $this->render(array('json' => array('success'=>1,
@@ -1203,9 +1435,230 @@ class KycController extends \lithium\action\Controller {
                 'no' =>$no,
                 'expiry' =>$expiry,
                 'licence_country' =>$licence_country,
-                'hash' => $key
+                'key' => $key
             ))); 
     }
+
+    //Step7
+    private function kycHoldingImgInfo($key,$kyc){
+      extract($this->request->data);
+
+        if(isset($this->request->data['file'])){
+         
+          foreach ($this->request->data['file'] as $img_key => $value) { 
+              if($this->request->data['file'][$img_key]['name'] != ''){
+                $status = $this->upload($kyc['hash'],$img_key,$type[$img_key]);
+                if($status['upload'] == 0){
+                   return $this->render(array('json' => array('success'=>0,
+                    'now'=>time(),
+                    'error'=>$status['msg']
+                   ))); 
+                }else{
+                  $data = array(
+                      'step.holdimg.status' =>'pending'
+                  );
+                  
+                  $conditions = array('hash' => $kyc['hash']);
+                  KYCDocuments::update($data, $conditions);  
+
+                }
+              }  
+          }
+      
+          return $this->render(array('json' => array('success'=>1,
+            'now'=>time(),
+            'result'=>'Holding Image save success',
+            'key' => $key
+          ))); 
+
+        }
+        else{
+              if(!$this->checkImageExits($kyc['hash'],'hold_img')){
+                 return $this->render(array('json' => array('success'=>0,
+                  'now'=>time(),
+                  'error'=>'Holding Photos Required!'
+                 )));
+              }else{
+                 return $this->render(array('json' => array('success'=>1,
+                  'now'=>time(),
+                  'result'=>'Holding Photos Aleredy uploaded!'
+                 )));
+              }
+        }  
+    }
+
+    // final kyc submit
+    public function submitKycDocument($key=null){
+        if($key==null || $key==""){
+            return $this->render(array('json' => array('success'=>0,
+                'now'=>time(),
+                'error'=>'Key missing!'
+            )));
+        }
+        else{
+            $record = Apps::find('first',array('conditions'=>array('key' => $key))); 
+            if(count($record)!=0){
+
+              $kyc = KYCDocuments::find('first',array('conditions'=>array('hash' => $record['hash'])));
+              
+              if(count($kyc) == 1){
+                  ////////////////////////////////////////Send Email
+                  $emaildata = array(
+                   'kyc_id'=>$kyc['kyc_id'],
+                   'email'=>$record['email']
+                  );
+                  $function = new Functions();
+                  $compact = array('data'=>$emaildata);
+                  $from = array(NOREPLY => "noreply@".COMPANY_URL);
+                  $email = 'nilamsir@gmail.com';
+                  $function->sendEmailTo($email,$compact,'process','submitKYC',"KYC - New From Submit",$from,'','','',null);
+
+                  ///////////////////////////////////////// 
+
+                   $data = array('step.issubmit' =>'y');
+                   $conditions = array('hash' => $kyc['hash']);
+                   KYCDocuments::update($data, $conditions); 
+
+                   return $this->render(array('json' => array('success'=>1,
+                     'now'=>time(),
+                     'result'=>'Submit success!'
+                   ))); 
+              }else{
+                return $this->render(array('json' => array('success'=>0,
+                  'now'=>time(),
+                  'error'=>'Documents not found!'
+                ))); 
+              }
+              
+
+            }else{
+              return $this->render(array('json' => array('success'=>0,
+                'now'=>time(),
+                'error'=>'Invalid Key!'
+              ))); 
+            }
+        }
+    }
+
+    // Flushing Kyc Document Image
+    public function removeImage($key=null){
+      if($key==null || $key==""){
+        return $this->render(array('json' => array('success'=>0,
+        'now'=>time(),
+        'error'=>'Key missing!'
+       )));
+      }
+
+      if($this->request->data['type']==null || $this->request->data['type']==""){
+        return $this->render(array('json' => array('success'=>0,
+        'now'=>time(),
+        'error'=>'Image type required!'
+       )));
+      }  
+
+
+      $record = Apps::find('first',array('conditions'=>array('key' => $key)));
+        if(count($record)!=0){
+          
+          $document = KYCDocuments::find('first',array('conditions'=>array('hash'=>$record['hash'])));
+          if(count($document) != 0){ 
+              
+              $type = $this->request->data['type'];
+              
+              $field = 'details_'.$type.'_id';
+              $remove = KYCFiles::remove('all',array(
+                  'conditions'=>array( $field => (string)$document['_id'])
+              ));
+
+              // $conditions = array('hash' => $record['hash']);
+              // $delete = [];
+              // $delete[] = $type;
+              // KYCDocuments::remove($conditions,$delete); 
+              
+              return $this->render(array('json' => array('success'=>1,
+                'now'=>time(),
+                'result'=>'Delete success',
+                'key' => $key
+              )));
+
+           }else{
+              return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'Document not found!',
+            )));
+           }   
+
+        }else{
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Invalid Key!',
+          )));
+        }  
+
+
+
+      // $document = KYCDocuments::find('first',array(
+      //     'conditions'=>array(
+      //         'hash'=>$id,
+      //         )
+      // ));  
+
+      //  $image_name = KYCFiles::find('first',array(
+      //     'conditions'=>array('details_'.$type.'_id'=>(string)$document['_id'])
+      // ));
+
+      // if($image_name['filename']!=""){
+      //         $image_name_name = $image_name['_id'].'_'.$image_name['filename'];
+      //            $path = LITHIUM_APP_PATH . '/webroot/documents/'.$image_name_name;
+      //            unlink($path);
+      //            return true;
+      // }
+    }
+
+
+    // free storage Space
+    public function unlinkKycImg($key=null){
+      if($key==null || $key==""){
+        return $this->render(array('json' => array('success'=>0,
+        'now'=>time(),
+        'error'=>'Key missing!'
+       )));
+      }  
+
+
+      $record = Apps::find('first',array('conditions'=>array('key' => $key)));
+        if(count($record)!=0){
+          $kycImage = $this->request->data['type'];
+
+          foreach ($kycImage as $type) {
+            $document = KYCDocuments::find('first',array('conditions'=>array('hash'=>$record['hash'])));  
+            $image = KYCFiles::find('first',array(
+                'conditions'=>array('details_'.$type.'_id'=>(string)$document['_id'])
+            ));
+
+            if($image['filename']!=""){
+                    $image_name = $image['_id'].'_'.$image['filename'];
+                    $path = LITHIUM_APP_PATH . '/webroot/documents/'.$image_name;
+                    unlink($path);
+            }
+          }
+
+          return $this->render(array('json' => array('success'=>1,
+            'now'=>time(),
+            'result'=>'Unlink success',
+            'key' => $key
+          ))); 
+        }else{
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Invalid Key!',
+          )));
+        }   
+    }
+
+
+
+
     
     /* Common Function */
     private function upload($id=null,$img_key=0,$type="passport"){
@@ -1265,11 +1718,9 @@ class KycController extends \lithium\action\Controller {
                   ));
                   $file = $this->request->data['file'];
                   
-                  $path = LITHIUM_APP_PATH. '\\webroot\\documents\\';
+                  $path = LITHIUM_APP_PATH. '/webroot/documents/';
                   
                   $resizedFile = $path.$this->request->data['file'][$img_key]['name'];
-                  
-                  //$resizedFileServer = 'https://'.$_SERVER['SERVER_NAME'].'/documents/'.$this->request->data['file']['name'];
                   
                   $resize = $this->smart_resize_image($this->request->data['file'][$img_key]['tmp_name'], null,1024 , 0 , true , $resizedFile , false , false ,100 );
 
@@ -1278,6 +1729,8 @@ class KycController extends \lithium\action\Controller {
                       $uploadOk = 0;
                   }
 
+                  
+                  
                   $fileData = array(
                           'file' => file_get_contents($resizedFile),
                           'filename'=>$this->request->data['file'][$img_key]['name'],
@@ -1323,8 +1776,20 @@ class KycController extends \lithium\action\Controller {
           // }
     }
 
-     /* Common Function */
-    private function getImage($id=null,$type='passport'){
+     
+    /* Common Function */
+    private function checkImageExits($id=null,$type=null){
+       $document = KYCDocuments::find('first',array('conditions'=>array('hash'=>$id)));  
+       $image_name = KYCFiles::find('first',array('conditions'=>array('details_'.$type.'_id'=>(string)$document['_id'])));
+       if($image_name['filename']!=""){
+           return true;
+       }else{
+           return false;
+       }    
+    }  
+
+    /* Common Function */
+    private function getImage($id=null,$type=null){
           $document = KYCDocuments::find('first',array(
               'conditions'=>array(
                   'hash'=>$id,
@@ -1336,52 +1801,30 @@ class KycController extends \lithium\action\Controller {
           ));
 
           if($image_name['filename']!=""){
-                  $image_name_name = $image_name['_id'].'_'.$image_name['filename'];
-                     $path = LITHIUM_APP_PATH . '/webroot/documents/'.$image_name_name;
-                     $return_path = 'http://hirath.org/documents/'.$image_name_name;
-                     file_put_contents($path, $image_name->file->getBytes());
-                    return $return_path;
+              $image_name_name = $image_name['_id'].'_'.$image_name['filename'];
+              $path = LITHIUM_APP_PATH . '/webroot/documents/'.$image_name_name;
+              $return_path = 'http://hitarth:8888/documents/'.$image_name_name;
+              file_put_contents($path, $image_name->file->getBytes());
+              return $return_path;
           }
     }
 
      /* Common Function */
-    private function removeImage($id=null,$type='passport'){
-          $document = KYCDocuments::find('first',array(
-              'conditions'=>array(
-                  'hash'=>$id,
-                  )
-          ));  
-
-           $image_name = KYCFiles::find('first',array(
-              'conditions'=>array('details_'.$type.'_id'=>(string)$document['_id'])
-          ));
-
-          if($image_name['filename']!=""){
-                  $image_name_name = $image_name['_id'].'_'.$image_name['filename'];
-                     $path = LITHIUM_APP_PATH . '/webroot/documents/'.$image_name_name;
-                     unlink($path);
-                     return true;
-          }
-    }
-
-     /* Common Function */
-    private function smart_resize_image($file,$string= null,$width= 0,$height= 0,$proportional= false,$output= 'file',
-            $delete_original= true,$use_linux_commands = false,$quality = 100) {
-
-      
-              if ( $height <= 0 && $width <= 0 ) return false;
-              if ( $file === null && $string === null ) return false;
+    private function smart_resize_image($file,$string= null,$width= 0,$height= 0,$proportional= false,$output= 'file',$delete_original= true,$use_linux_commands = false,$quality = 100) {
+          if ( $height <= 0 && $width <= 0 ) return false;
+          if ( $file === null && $string === null ) return false;
               # Setting defaults and meta
-              $info                         = $file !== null ? getimagesize($file) : getimagesizefromstring($string);
-              $image                        = '';
-              $final_width                  = 0;
-              $final_height                 = 0;
-              //                print_r($info);
-                        if($info==null){
-                            return false;
-                        }
-            list($width_old, $height_old) = $info;
-            $cropHeight = $cropWidth = 0;
+          $info   = $file !== null ? getimagesize($file) : getimagesizefromstring($string);
+          $image  = '';
+          $final_width = 0;
+          $final_height = 0;
+          // print_r($info);
+          if($info==null){
+            return false;
+          }
+            
+          list($width_old, $height_old) = $info;
+          $cropHeight = $cropWidth = 0;
 
             # Calculating proportionality
             if ($proportional) {
