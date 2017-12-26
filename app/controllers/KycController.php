@@ -387,6 +387,53 @@ class KycController extends \lithium\action\Controller {
       }
     }
 
+    public function checkmobilecode($key = null){
+
+
+      if($key==null || $key==""){
+        return $this->render(array('json' => array('success'=>0,
+        'now'=>time(),
+        'error'=>'Key missing!'
+       )));
+      }else{
+         if($this->request->data['code']){
+          $record = Apps::find('first',array('conditions'=>array('key' => $key,'phone_code'=>$this->request->data['code'])));
+            if(count($record)!=0){
+                $conditions = array('hash'=>$record['hash']);
+                $find = kycDocuments::find('first',array('conditions' => $conditions));
+
+                if(count($find)===0){
+                  return $this->render(array('json' => array('success'=>0,
+                    'now'=>time(),
+                    'error'=>'Otp Code Invalid',
+                    'Server'=>md5($_SERVER["SERVER_ADDR"]),
+                    'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+                    )));
+                }else{
+                 return $this->render(array('json' => array('success'=>1,
+                  'now'=>time(),
+                  'result'=>'Otp Code Valid',
+                  'Server'=>md5($_SERVER["SERVER_ADDR"]),
+                  'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+                 )));
+                }
+            }else{
+              return $this->render(array('json' => array('success'=>0,
+                'now'=>time(),
+                'error'=>'Otp Code Invalid!'
+              ))); 
+            }    
+         }else{
+           return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Otp Code Required!',
+            'Server'=>md5($_SERVER["SERVER_ADDR"]),
+            'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+            )));     
+         }
+        }
+    }
+
     public function saveaadhar($key=null){
     
       if($key==null || $key==""){
@@ -444,7 +491,6 @@ class KycController extends \lithium\action\Controller {
        }
       }
     }
-    
     
     public function getStepStatus($key = null){
 
@@ -711,12 +757,12 @@ class KycController extends \lithium\action\Controller {
            )));
         } 
 
-        if($this->request->data['middlename']==null || $this->request->data['middlename']=="") {
-           return $this->render(array('json' => array('success'=>0,
-            'now'=>time(),
-            'error'=>'Middle Name Required!'
-           )));
-        } 
+        // if($this->request->data['middlename']==null || $this->request->data['middlename']=="") {
+        //    return $this->render(array('json' => array('success'=>0,
+        //     'now'=>time(),
+        //     'error'=>'Middle Name Required!'
+        //    )));
+        // } 
 
         if($this->request->data['lastname']==null || $this->request->data['lastname']=="") {
            return $this->render(array('json' => array('success'=>0,
@@ -732,7 +778,22 @@ class KycController extends \lithium\action\Controller {
            )));
         }
 
+        $arr = explode("-", $this->request->data['dob']);
+        $dd = $arr[2];
+        $mm = $arr[1];
+        $yyyy = $arr[0];
+
+        if (!checkdate($mm, $dd, $yyyy)) {
+            return $this->render(array('json' => array('success'=>0,
+             'now'=>time(),
+             'error'=>'Date of birth not valid yyyy-mm-dd'
+            )));
+        }
+
+
+
         extract($this->request->data);
+        $middlename = ($middlename == '') ? '' : $middlename;
 
         if(isset($this->request->data['file'])){
              
@@ -770,7 +831,7 @@ class KycController extends \lithium\action\Controller {
             $data = array(
                 'details.Name' => $basic,
                 'details.Birth' => $birth,
-                'step.basic.status' =>'pending'   
+                'step.basic.status' =>'completed'
             );
             
             $conditions = array('hash' => $kyc['hash']);
@@ -867,7 +928,7 @@ class KycController extends \lithium\action\Controller {
 
             $data = array(
                 'details.Address' => $address_info,
-                'step.address.status' =>'pending'
+                'step.address.status' =>'completed'
             );
             
             $conditions = array('hash' => $kyc['hash']);
@@ -903,18 +964,30 @@ class KycController extends \lithium\action\Controller {
            )));
         } 
 
-        if($this->request->data['middlename']==null || $this->request->data['middlename']=="") {
-           return $this->render(array('json' => array('success'=>0,
-            'now'=>time(),
-            'error'=>'Passport Middel Name Required!'
-           )));
-        }
+        // if($this->request->data['middlename']==null || $this->request->data['middlename']=="") {
+        //    return $this->render(array('json' => array('success'=>0,
+        //     'now'=>time(),
+        //     'error'=>'Passport Middel Name Required!'
+        //    )));
+        // }
 
         if($this->request->data['dob']==null || $this->request->data['dob']=="") {
            return $this->render(array('json' => array('success'=>0,
             'now'=>time(),
             'error'=>'Passport Date of Birth Required!'
            )));
+        }
+
+        $arr = explode("-", $this->request->data['dob']);
+        $dd = $arr[2];
+        $mm = $arr[1];
+        $yyyy = $arr[0];
+
+        if (!checkdate($mm, $dd, $yyyy)) {
+            return $this->render(array('json' => array('success'=>0,
+             'now'=>time(),
+             'error'=>'Date of birth not valid yyyy-mm-dd'
+            )));
         }
 
         if($this->request->data['address']==null || $this->request->data['address']=="") {
@@ -973,6 +1046,18 @@ class KycController extends \lithium\action\Controller {
            )));
         }
 
+        $arr = explode("-", $this->request->data['expiry']);
+        $dd = $arr[2];
+        $mm = $arr[1];
+        $yyyy = $arr[0];
+
+        if (!checkdate($mm, $dd, $yyyy)) {
+            return $this->render(array('json' => array('success'=>0,
+             'now'=>time(),
+             'error'=>'Passport expiry not valid yyyy-mm-dd'
+            )));
+        }
+
         if($this->request->data['pass_country']==null || $this->request->data['pass_country']=="") {
            return $this->render(array('json' => array('success'=>0,
             'now'=>time(),
@@ -982,6 +1067,7 @@ class KycController extends \lithium\action\Controller {
 
     
         extract($this->request->data);
+        $middlename = ($middlename == '') ? '' : $middlename;
             $img = ['passport1','passport2'];
             if(isset($this->request->data['file'])){
                 
@@ -1040,7 +1126,7 @@ class KycController extends \lithium\action\Controller {
             
             $data = array(
                 'details.Passport' => $passport_info,
-                'step.passport.status' =>'pending'
+                'step.passport.status' =>'completed'
             );
             
             $conditions = array('hash' => $kyc['hash']);
@@ -1156,7 +1242,7 @@ class KycController extends \lithium\action\Controller {
             
             $data = array(
                 'details.Aadhar' => $aadhar_info,
-                'step.aadhar.status' =>'pending'
+                'step.aadhar.status' =>'completed'
             );
             
             $conditions = array('hash' => $kyc['hash']);
@@ -1183,12 +1269,12 @@ class KycController extends \lithium\action\Controller {
            )));
         } 
 
-        if($this->request->data['middleName']==null || $this->request->data['middleName']=="") {
-           return $this->render(array('json' => array('success'=>0,
-            'now'=>time(),
-            'error'=>'Tax Middel Name Required!'
-           )));
-        } 
+        // if($this->request->data['middleName']==null || $this->request->data['middleName']=="") {
+        //    return $this->render(array('json' => array('success'=>0,
+        //     'now'=>time(),
+        //     'error'=>'Tax Middel Name Required!'
+        //    )));
+        // } 
 
         if($this->request->data['lastName']==null || $this->request->data['lastName']=="") {
            return $this->render(array('json' => array('success'=>0,
@@ -1202,6 +1288,18 @@ class KycController extends \lithium\action\Controller {
             'now'=>time(),
             'error'=>'Tax Date of Birth Required!'
            )));
+        }
+
+        $arr = explode("-", $this->request->data['dateofBirth']);
+        $dd = $arr[2];
+        $mm = $arr[1];
+        $yyyy = $arr[0];
+
+        if (!checkdate($mm, $dd, $yyyy)) {
+            return $this->render(array('json' => array('success'=>0,
+             'now'=>time(),
+             'error'=>'Date of birth not valid yyyy-mm-dd'
+            )));
         }
 
         if($this->request->data['id']==null || $this->request->data['id']=="") {
@@ -1219,7 +1317,8 @@ class KycController extends \lithium\action\Controller {
         // }
       
 
-        extract($this->request->data);  
+        extract($this->request->data); 
+        $middleName = ($middleName == '') ? '' : $middleName; 
         
             if(isset($this->request->data['file'])){
                
@@ -1254,7 +1353,7 @@ class KycController extends \lithium\action\Controller {
           
             $data = array(
                 'details.Tax' => $tax,
-                'step.taxation.status' =>'pending'
+                'step.taxation.status' =>'completed'
             );
             
             $conditions = array('hash' => $kyc['hash']);
@@ -1289,12 +1388,12 @@ class KycController extends \lithium\action\Controller {
            )));
         } 
 
-        if($this->request->data['middlename']==null || $this->request->data['middlename']=="") {
-           return $this->render(array('json' => array('success'=>0,
-            'now'=>time(),
-            'error'=>'Licence Middel Name Required!'
-           )));
-        }
+        // if($this->request->data['middlename']==null || $this->request->data['middlename']=="") {
+        //    return $this->render(array('json' => array('success'=>0,
+        //     'now'=>time(),
+        //     'error'=>'Licence Middel Name Required!'
+        //    )));
+        // }
 
         if($this->request->data['dob']==null || $this->request->data['dob']=="") {
            return $this->render(array('json' => array('success'=>0,
@@ -1302,6 +1401,19 @@ class KycController extends \lithium\action\Controller {
             'error'=>'Licence Date of Birth Required!'
            )));
         }
+
+        $arr = explode("-", $this->request->data['dob']);
+        $dd = $arr[2];
+        $mm = $arr[1];
+        $yyyy = $arr[0];
+
+        if (!checkdate($mm, $dd, $yyyy)) {
+            return $this->render(array('json' => array('success'=>0,
+             'now'=>time(),
+             'error'=>'Date of birth not valid yyyy-mm-dd'
+            )));
+        }
+
 
         if($this->request->data['address']==null || $this->request->data['address']=="") {
            return $this->render(array('json' => array('success'=>0,
@@ -1359,6 +1471,18 @@ class KycController extends \lithium\action\Controller {
            )));
         }
 
+        $arr = explode("-", $this->request->data['expiry']);
+        $dd = $arr[2];
+        $mm = $arr[1];
+        $yyyy = $arr[0];
+
+        if (!checkdate($mm, $dd, $yyyy)) {
+            return $this->render(array('json' => array('success'=>0,
+             'now'=>time(),
+             'error'=>'Licence expiry not valid yyyy-mm-dd'
+            )));
+        }
+
         if($this->request->data['licence_country']==null || $this->request->data['licence_country']=="") {
            return $this->render(array('json' => array('success'=>0,
             'now'=>time(),
@@ -1368,6 +1492,7 @@ class KycController extends \lithium\action\Controller {
 
     
             extract($this->request->data);
+             $middlename = ($middlename == '') ? '' : $middlename;
 
             if(isset($this->request->data['file'])){
              
@@ -1413,7 +1538,7 @@ class KycController extends \lithium\action\Controller {
             
             $data = array(
                 'details.Driving' => $licence,
-                'step.drivinglicence.status' =>'pending'
+                'step.drivinglicence.status' =>'completed'
             );
             
             $conditions = array('hash' => $kyc['hash']);
@@ -1455,7 +1580,7 @@ class KycController extends \lithium\action\Controller {
                    ))); 
                 }else{
                   $data = array(
-                      'step.holdimg.status' =>'pending'
+                      'step.holdimg.status' =>'completed'
                   );
                   
                   $conditions = array('hash' => $kyc['hash']);
@@ -1499,9 +1624,8 @@ class KycController extends \lithium\action\Controller {
             $record = Apps::find('first',array('conditions'=>array('key' => $key))); 
             if(count($record)!=0){
 
-              $kyc = KYCDocuments::find('first',array('conditions'=>array('hash' => $record['hash'])));
-              
-              if(count($kyc) == 1){
+              $kyc = KYCDocuments::find('first',array('conditions'=>array('hash' => $record['hash'])))->to('array');
+              if(count($kyc) !=0){
                   ////////////////////////////////////////Send Email
                   $emaildata = array(
                    'kyc_id'=>$kyc['kyc_id'],
@@ -1513,12 +1637,30 @@ class KycController extends \lithium\action\Controller {
                   $email = 'nilamsir@gmail.com';
                   $function->sendEmailTo($email,$compact,'process','submitKYC',"KYC - New From Submit",$from,'','','',null);
 
-                  ///////////////////////////////////////// 
+                  /////////////////////////////////////////
+                  $data = [];
+                  foreach ($kyc['step'] as $k => $val){
+                    if($k == 'issubmit')
+                         $data['step.'.$k] = 'y';
+                    else{
+                      foreach ($val as $sk => $v) {
+                        if($sk == 'status' && $v == 'completed'){
+                            $data['step.'.$k.'.'.$sk] = 'process';
+                            $data['step.'.$k.'.message'] = 'In process';
+                        }    
+                      }
+                    }      
+                  }
 
-                   $data = array('step.issubmit' =>'y');
-                   $conditions = array('hash' => $kyc['hash']);
-                   KYCDocuments::update($data, $conditions); 
+                  // echo "<pre>";
+                  // print_r($data);
+                  // exit();
 
+                  if(count($data) > 0){
+                    // $data = array('step.issubmit' =>'y');
+                    $conditions = array('hash' => $kyc['hash']);
+                    KYCDocuments::update($data, $conditions); 
+                  } 
                    return $this->render(array('json' => array('success'=>1,
                      'now'=>time(),
                      'result'=>'Submit success!'
@@ -1615,7 +1757,6 @@ class KycController extends \lithium\action\Controller {
       // }
     }
 
-
     // free storage Space
     public function unlinkKycImg($key=null){
       if($key==null || $key==""){
@@ -1655,12 +1796,54 @@ class KycController extends \lithium\action\Controller {
           )));
         }   
     }
-
-
-
-
     
-    /* Common Function */
+
+    //KYC Login
+    public function verifykyc($key = null){
+      if($key==null || $key==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Key missing!'
+        )));
+      }else if($this->request->data['kyc_id']==null || $this->request->data['kyc_id']==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Kyc id missing!'
+        )));
+      }else{
+           extract($this->request->data);
+           $conditions = array('key' => $key);
+           $record = Apps::find('first',array('conditions'=>$conditions));
+           if(count($record)!=0){
+
+              $conditions = array('hash' => $record['hash'],'kyc_id'=>$kyc_id);
+              $document = KYCDocuments::find('first',array('conditions'=>$conditions));
+               
+              if(count($document)!=0){           
+                 
+                 return $this->render(array('json' => array('success'=>1,
+                  'now'=>time(),
+                  'result' =>'Kyc document get success'
+                 )));
+
+              }else{
+                 return $this->render(array('json' => array('success'=>0,
+                  'now'=>time(),
+                  'error'=>'Kyc id wrong!'
+                )));
+              }
+              
+           }else{
+              return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'Invalid Key!'
+              )));    
+           }
+      }
+    }
+
+
+    /* Common Function  */
     private function upload($id=null,$img_key=0,$type="passport"){
           $response = [];
           $uploadOk = 1;
