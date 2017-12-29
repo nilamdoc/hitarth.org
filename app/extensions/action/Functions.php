@@ -78,7 +78,7 @@ class Functions extends \lithium\action\Controller {
 	  return "now";
 	}   
 
-		public function number_to_words($number) {
+	public function number_to_words($number) {
 	   
 		$hyphen      = '-';
 		$conjunction = ' and ';
@@ -230,6 +230,7 @@ class Functions extends \lithium\action\Controller {
 
 	function sendEmailTo($email = null,$compact = null,$controller=null,$template=null,$subject=null,$from=null,$mail1 = null,$mail2 = null,$mail3 = null,$attach = null){
 
+
 			$view  = new View(array(
 			'loader' => 'File',
 			'renderer' => 'File',
@@ -237,6 +238,7 @@ class Functions extends \lithium\action\Controller {
 				'template' => '{:library}/views/{:controller}/{:template}.{:type}.php'
 			)
 		));
+
 			$body = $view->render(
 				'template',
 				compact('compact'),

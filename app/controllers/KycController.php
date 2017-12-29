@@ -7,7 +7,6 @@ use app\models\Templates;
 use app\models\Apps;
 use app\extensions\action\Uuid;
 
-
 use app\models\KYCDetails;
 use app\models\KYCCompanies;
 use app\models\KYCDocuments;
@@ -239,15 +238,15 @@ class KycController extends \lithium\action\Controller {
 
 
                      ////////////////////////////////////////Send Email
-                				$emaildata = array(
-                					'kyc_id'=>$email_code,
-                					'email'=>$email
-                				);
-                				$function = new Functions();
-                				$compact = array('data'=>$emaildata);
-                				$from = array(NOREPLY => "noreply@".COMPANY_URL);
-                				$email = $email;
-                				$function->sendEmailTo($email,$compact,'process','sendKYC',"KYCGlobal - Email Code",$from,'','','',null);
+                				// $emaildata = array(
+                				// 	'kyc_id'=>$email_code,
+                				// 	'email'=>$email
+                				// );
+                				// $function = new Functions();
+                				// $compact = array('data'=>$emaildata);
+                				// $from = array(NOREPLY => "noreply@".COMPANY_URL);
+                				// $email = $email;
+                				// $function->sendEmailTo($email,$compact,'process','sendKYC',"KYCGlobal - Email Code",$from,'','','',null);
                      //////////////////////////////////////////////////////////////////////
                      
                         
@@ -1648,15 +1647,15 @@ class KycController extends \lithium\action\Controller {
               $kyc = KYCDocuments::find('first',array('conditions'=>array('hash' => $record['hash'])))->to('array');
               if(count($kyc) !=0){
                   ////////////////////////////////////////Send Email
-                  $emaildata = array(
-                   'kyc_id'=>$kyc['kyc_id'],
-                   'email'=>$record['email']
-                  );
-                  $function = new Functions();
-                  $compact = array('data'=>$emaildata);
-                  $from = array(NOREPLY => "noreply@".COMPANY_URL);
-                  $email = 'nilamsir@gmail.com';
-                  $function->sendEmailTo($email,$compact,'process','submitKYC',"KYC - New From Submit",$from,'','','',null);
+                  // $emaildata = array(
+                  //  'kyc_id'=>$kyc['kyc_id'],
+                  //  'email'=>$record['email']
+                  // );
+                  // $function = new Functions();
+                  // $compact = array('data'=>$emaildata);
+                  // $from = array(NOREPLY => "noreply@".COMPANY_URL);
+                  // $email = 'nilamsir@gmail.com';
+                  // $function->sendEmailTo($email,$compact,'process','submitKYC',"KYC - New From Submit",$from,'','','',null);
 
                   /////////////////////////////////////////
                   $data = [];
@@ -1842,17 +1841,35 @@ class KycController extends \lithium\action\Controller {
       }else{
            extract($this->request->data);
            $conditions = array('key' => $key);
-           $record = Apps::find('first',array('conditions'=>$conditions));
-           if(count($record)!=0){
+           $record = Apps::find('first',array('conditions'=>$conditions))->to('array');
+          if(count($record)!=0){
 
               $conditions = array('hash' => $record['hash'],'kyc_id'=>$kyc_id);
               $document = KYCDocuments::find('first',array('conditions'=>$conditions));
-               
-              if(count($document)!=0){           
-                 
+              
+              if(count($document)!=0){            
+                
+                $wallets = [];
+                foreach ($record['wallets'] as $k => $v) { 
+                     $XGCWallet = XGCUsers::find('first',array(
+                        'conditions'=>['walletid' => $v['walletid']]
+                      ))->to('array');
+
+                     $wallets[$k] = array(
+                      'walletid' =>$record['wallets'][$k]['walletid'],
+                      'name' =>$record['wallets'][$k]['walletName'],
+                      'kyc_id'=>$document['kyc_id'],
+                      'email'=>$XGCWallet['email'],
+                      'phone'=>$XGCWallet['phone'],
+                      'currency'=>$record['wallets'][$k]['walletCurrency']
+                      );
+                }  
                  return $this->render(array('json' => array('success'=>1,
                   'now'=>time(),
-                  'result' =>'Kyc document get success'
+                  'result' =>'Kyc document success',
+                  'walletcount' => count($record['wallets']),
+                  'wallets' => $wallets
+
                  )));
 
               }else{
@@ -1862,12 +1879,12 @@ class KycController extends \lithium\action\Controller {
                 )));
               }
               
-           }else{
+          }else{
               return $this->render(array('json' => array('success'=>0,
               'now'=>time(),
               'error'=>'Invalid Key!'
               )));    
-           }
+          }
       }
     }
 

@@ -8,6 +8,8 @@
 namespace app\controllers;
 use app\models\Wallets;
 use app\models\Apps;
+use app\models\KYCDocuments;
+use app\models\KYCFiles;
 
 use app\models\Countries;
 use app\models\Templates;
@@ -805,5 +807,75 @@ class AppController extends \lithium\action\Controller {
   }
 
 
+  public function getprofile($key = null){
+    if ($key==null || $key == ""){
+      return $this->render(array('json' => array('success'=>0,
+      'now'=>time(),
+      'error'=>'Key missing!'
+      )));
+    }
+
+    $record = Apps::find('first',array(
+      'conditions' => array(
+        'key'=>$key
+        )
+      )
+    );
+  
+    if(count($record) > 0){
+        $document = KYCDocuments::find('first',array(
+          'conditions' => array(
+            'hash'=>$record['hash']
+            )
+          )
+        );
+      
+        if(count($document) > 0){
+           $path = $this->getImage($record['hash'],'profile_img'); 
+          return $this->render(array('json' => array('success'=>1,
+            'now'=>time(),
+            'result'=>'Profile getting',
+            'kyc_id' => $document['kyc_id'],
+            'email' => $record['email'],
+            'name' => $document['details']['Name'],
+            'phone' => $record['phone'],
+            'address' => $document['details']['Address'],
+            'profile' => $path
+          ))); 
+        }else{
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Document not exits!',
+          )));
+        }  
+    }else{
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Key does not match',
+        )));
+    }
+  }
+
+  /* Common Function */
+    private function getImage($id=null,$type=null){
+      $document = KYCDocuments::find('first',array(
+          'conditions'=>array(
+              'hash'=>$id,
+              )
+      ));  
+
+       $image_name = KYCFiles::find('first',array(
+          'conditions'=>array('details_'.$type.'_id'=>(string)$document['_id'])
+      ));
+
+
+      if($image_name['filename']!=""){
+          $image_name_name = $image_name['_id'].'_'.$image_name['filename'];
+          $path = LITHIUM_APP_PATH . '/webroot/documents/'.$image_name_name;
+          $return_path = 'http://hitarth:8888/documents/'.$image_name_name;
+          file_put_contents($path, $image_name->file->getBytes());
+          return $return_path;
+      }
+    }
 }
 ?>

@@ -185,6 +185,15 @@ class ExController extends \lithium\action\Controller {
           $record = Apps::find('first',array('conditions' => array('key'=>$key)))->to('array');    
           if(count($record) > 0){
 
+            $checkId = Apps::find('first',array('conditions' => array('key'=>$key, 'wallets.walletid' => $walletid)));
+            if(count($checkId)!=0){
+                return $this->render(array('json' => array('success'=>0,
+                  'now'=>time(),
+                  'error'=>'Wallet Already exits!'
+                )));
+            }
+
+
             $walletAry = count($record['wallets']) > 0 ? $record['wallets'] : array();
             $newWallet = array(
                 'walletid' => $walletid,
@@ -242,20 +251,20 @@ class ExController extends \lithium\action\Controller {
           }    
       }
 
-      public function setpublickey($key = null){
-        if($key==null || $key==""){
-          return $this->render(array('json' => array('success'=>0,
-              'now'=>time(),
-              'error'=>'Key missing!'
-          )));
-        }    
+      public function setpublickey($key = null){        
+          if($key==null || $key==""){
+            return $this->render(array('json' => array('success'=>0,
+                'now'=>time(),
+                'error'=>'Key missing!'
+            )));
+          }    
 
-        if($this->request->data['publickey'] ==null || $this->request->data['publickey']==""){
-          return $this->render(array('json' => array('success'=>0,
-            'now'=>time(),
-            'error'=>'public key required!'
-          )));
-        }
+          if($this->request->data['publickey'] ==null || $this->request->data['publickey']==""){
+            return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'public key required!'
+            )));
+          }
       }
 }
 ?>

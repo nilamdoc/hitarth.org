@@ -28,7 +28,7 @@ class UsersController extends \lithium\action\Controller {
 				'lastname' => ''
 			);
 			$Users = Users::create($data);
-      $saved = $Users->save();
+            $saved = $Users->save();
 			if($saved==true){
 				$ga = new GoogleAuthenticator();
 				$data = array(
