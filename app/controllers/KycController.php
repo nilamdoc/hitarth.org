@@ -176,85 +176,102 @@ class KycController extends \lithium\action\Controller {
         'error'=>'Key missing!'
        )));
       }else{
+
            $conditions = array('key' => $key);
            $record = Apps::find('first',array('conditions'=>$conditions));
-           
+
            if(count($record)!=0){
-            $data = array('process'=>'email verify');
-            Apps::update($data,$conditions);
+              $conditions = array('hash' => $record['hash'],'step.issubmit' => 'y');
+              $document = KYCDocuments::find('first',array('conditions'=>$conditions));               
+              
+              // echo "<pre>";
+              // print_r($document->to('array'));
+              // exit();
 
-            if($this->request->data){
-               if($this->request->data['email']){
+              if(count($document) == 0){
+                
+                $data = array('process'=>'email verify');
+                Apps::update($data,$conditions);
 
-                    $email = strtolower($this->request->data['email']);
-                    $uuid = new Uuid();
-                    $emails = kycDocuments::find('first',array(
-                     'conditions'=>array('email'=>$email)
-                    ));
-                    $data = array(
-                     'email' => strtolower($this->request->data['email']),
-                     'hash'=>md5(strtolower($this->request->data['email']))
-                    );
-                    $conditions = array(
-                     'key' => $key 
-                    );
-                    Apps::update($data,$conditions);
+                  if($this->request->data){
+                   if($this->request->data['email']){
 
-                     if(count($emails)===0){
-                        $kyc_id = $uuid->v4v();
-                        $email_code = substr($kyc_id,0,4);
+                        $email = strtolower($this->request->data['email']);
+                        $uuid = new Uuid();
+                        $emails = kycDocuments::find('first',array(
+                         'conditions'=>array('email'=>$email)
+                        ));
                         $data = array(
-                         'kyc_id'=>$kyc_id,
-                         'email_code'=>$email_code,
-                         'email'=>$email,
-                         'hash'=>md5($email),
-                         'IP'=>$_SERVER['REMOTE_ADDR']
+                         'email' => strtolower($this->request->data['email']),
+                         'hash'=>md5(strtolower($this->request->data['email']))
                         );
-                        $Documents = kycDocuments::create($data);
-                        $saved = $Documents->save();
-                     }else{
-                      $emails = kycDocuments::find('first',array(
-                				   'conditions'=>array('email'=>$email)
-                			   ));
-                		
-                        $kyc_id = $emails['kyc_id'];
-                        $email_code = $emails['email_code'];
-                        if($emails['Verify']['Score']>=80){
-                          return $this->render(array('json' => array(
-                           'success'=>0,
-                           'error'=>'Aleredy KYC complete'
-                          )));	
+                        $conditions = array(
+                         'key' => $key 
+                        );
+                        Apps::update($data,$conditions);
+
+                         if(count($emails)===0){
+                            $kyc_id = $uuid->v4v();
+                            $email_code = substr($kyc_id,0,4);
+                            $data = array(
+                             'kyc_id'=>$kyc_id,
+                             'email_code'=>$email_code,
+                             'email'=>$email,
+                             'hash'=>md5($email),
+                             'IP'=>$_SERVER['REMOTE_ADDR']
+                            );
+                            $Documents = kycDocuments::create($data);
+                            $saved = $Documents->save();
+                         }else{
+                          $emails = kycDocuments::find('first',array(
+                    				   'conditions'=>array('email'=>$email)
+                    			   ));
+                    		
+                            $kyc_id = $emails['kyc_id'];
+                            $email_code = $emails['email_code'];
+                            if($emails['Verify']['Score']>=80){
+                              return $this->render(array('json' => array(
+                               'success'=>0,
+                               'error'=>'Aleredy KYC complete'
+                              )));	
+                            }
                          }
+
+
+                     ////////////////////////////////////////Send Email
+                				$emaildata = array(
+                					'kyc_id'=>$email_code,
+                					'email'=>$email
+                				);
+                				$function = new Functions();
+                				$compact = array('data'=>$emaildata);
+                				$from = array(NOREPLY => "noreply@".COMPANY_URL);
+                				$email = $email;
+                				$function->sendEmailTo($email,$compact,'process','sendKYC',"KYCGlobal - Email Code",$from,'','','',null);
+                     //////////////////////////////////////////////////////////////////////
+                     
+                        
+                     
+                       return $this->render(array('json' => array(
+                        'success'=>1,
+                        'email_code'=>$email_code,
+                    		'Server'=>md5($_SERVER["SERVER_ADDR"]),
+                        'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+                       )));
                      }
-
-
-                 ////////////////////////////////////////Send Email
-            				$emaildata = array(
-            					'kyc_id'=>$email_code,
-            					'email'=>$email
-            				);
-            				$function = new Functions();
-            				$compact = array('data'=>$emaildata);
-            				$from = array(NOREPLY => "noreply@".COMPANY_URL);
-            				$email = $email;
-            				$function->sendEmailTo($email,$compact,'process','sendKYC',"KYCGlobal - Email Code",$from,'','','',null);
-                 //////////////////////////////////////////////////////////////////////
-                 
-                    
-                 
-                   return $this->render(array('json' => array(
-                    'success'=>1,
-                    'email_code'=>$email_code,
-                		'Server'=>md5($_SERVER["SERVER_ADDR"]),
-                    'Refer'=>md5($_SERVER["REMOTE_ADDR"])
-                   )));
-                 }
+                  }else{
+                    return $this->render(array('json' => array('success'=>0,
+                    'now'=>time(),
+                    'error'=>'No Email Specified!'
+                    )));         
+                  }
               }else{
-                return $this->render(array('json' => array('success'=>0,
-                'now'=>time(),
-                'error'=>'No Email Specified!'
-                )));         
-              }
+                return $this->render(array('json' => array('success'=>1,
+                  'now'=>time(),
+                  'result'=>'Aleredy Your Email verify!'
+                )));    
+              }    
+
            }else{
               return $this->render(array('json' => array('success'=>0,
               'now'=>time(),
@@ -322,32 +339,36 @@ class KycController extends \lithium\action\Controller {
         'error'=>'Key missing!'
        )));
       }else{
-       $conditions = array(
-        'key' => $key 
-       );
-      
-       $record = Apps::find('first',array(
-        'conditions'=>$conditions
-       ));
+          $conditions = array('key' => $key);
+          $record = Apps::find('first',array('conditions'=>$conditions));
        
-       if(count($record)!=0){
-        $data = array(
-         'process'=>'send mobile code'
-        );
-        Apps::update($data,$conditions);   
-       }else{
-          return $this->render(array('json' => array('success'=>0,
-          'now'=>time(),
-          'error'=>'Invalid Key!'
-          ))); 
-       }
+          if(count($record)!=0){
+            $data = array('process'=>'send mobile code');
+            Apps::update($data,$conditions);   
+          }else{
+            return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'Invalid Key!'
+            ))); 
+          }
+
+          $conditions = array('hash' => $record['hash'],'step.issubmit' => 'y');
+          $document = KYCDocuments::find('first',array('conditions'=>$conditions));
+
+          if(count($document) != 0){
+            return $this->render(array('json' => array('success'=>1,
+              'now'=>time(),
+              'result'=>'Aleredy Your Mobile verify!'
+            )));    
+          }  
+
 
        if($this->request->data){
           if($this->request->data['mobile']==null || $this->request->data['mobile']=="") {
-           return $this->render(array('json' => array('success'=>0,
-            'now'=>time(),
-            'error'=>'Mobile number required!'
-           )));
+            return $this->render(array('json' => array('success'=>0,
+             'now'=>time(),
+             'error'=>'Mobile number required!'
+            )));
           }
 
           if($this->request->data['country_code']==null || $this->request->data['country_code']=="") {
@@ -1182,10 +1203,10 @@ class KycController extends \lithium\action\Controller {
            )));
         }
           
-        if(strlen($this->request->data['no']) != 16) {
+        if(strlen($this->request->data['no']) != 12) {
            return $this->render(array('json' => array('success'=>0,
             'now'=>time(),
-            'error'=>'Aadhar Number Length Must Be 16!'
+            'error'=>'Aadhar Number Length Must Be 12!'
            )));
         }
       
@@ -1691,6 +1712,14 @@ class KycController extends \lithium\action\Controller {
        )));
       }
 
+      if($this->request->data['step']==null || $this->request->data['step']==""){
+        return $this->render(array('json' => array('success'=>0,
+        'now'=>time(),
+        'error'=>'step key required!'
+       )));
+      } 
+
+
       if($this->request->data['type']==null || $this->request->data['type']==""){
         return $this->render(array('json' => array('success'=>0,
         'now'=>time(),
@@ -1705,6 +1734,7 @@ class KycController extends \lithium\action\Controller {
           $document = KYCDocuments::find('first',array('conditions'=>array('hash'=>$record['hash'])));
           if(count($document) != 0){ 
               
+              $step = $this->request->data['step'];
               $type = $this->request->data['type'];
               
               $field = 'details_'.$type.'_id';
@@ -1712,10 +1742,9 @@ class KycController extends \lithium\action\Controller {
                   'conditions'=>array( $field => (string)$document['_id'])
               ));
 
-              // $conditions = array('hash' => $record['hash']);
-              // $delete = [];
-              // $delete[] = $type;
-              // KYCDocuments::remove($conditions,$delete); 
+              $data = array('step.'.$step.'.status' => 'incompleted');  
+              $conditions = array('hash' => $record['hash']);
+              KYCDocuments::update($data,$conditions); 
               
               return $this->render(array('json' => array('success'=>1,
                 'now'=>time(),
