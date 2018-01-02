@@ -183,6 +183,7 @@ class KycController extends \lithium\action\Controller {
               $conditions = array('hash' => $record['hash'],'step.issubmit' => 'y');
               $document = KYCDocuments::find('first',array('conditions'=>$conditions));               
               
+
               // echo "<pre>";
               // print_r($document->to('array'));
               // exit();
@@ -197,7 +198,7 @@ class KycController extends \lithium\action\Controller {
 
                         $email = strtolower($this->request->data['email']);
                         $uuid = new Uuid();
-                        $emails = kycDocuments::find('first',array(
+                      $emails = kycDocuments::find('first',array(
                          'conditions'=>array('email'=>$email)
                         ));
                         $data = array(
@@ -267,6 +268,7 @@ class KycController extends \lithium\action\Controller {
               }else{
                 return $this->render(array('json' => array('success'=>1,
                   'now'=>time(),
+                  'email_code'=>$document['email_code'],
                   'result'=>'Aleredy Your Email verify!'
                 )));    
               }    
@@ -357,6 +359,7 @@ class KycController extends \lithium\action\Controller {
           if(count($document) != 0){
             return $this->render(array('json' => array('success'=>1,
               'now'=>time(),
+              'phone_code'=>$record['phone_code'],
               'result'=>'Aleredy Your Mobile verify!'
             )));    
           }  
@@ -513,9 +516,6 @@ class KycController extends \lithium\action\Controller {
     }
     
     public function getStepStatus($key = null){
-
-
-
       if($key==null || $key==""){
           return $this->render(array('json' => array('success'=>0,
             'now'=>time(),
@@ -1646,6 +1646,20 @@ class KycController extends \lithium\action\Controller {
 
               $kyc = KYCDocuments::find('first',array('conditions'=>array('hash' => $record['hash'])))->to('array');
               if(count($kyc) !=0){
+
+                if($kyc['step']['basic']['status'] != 'completed' &&
+                   $kyc['step']['address']['status'] != 'completed' &&
+                   $kyc['step']['aadhar']['status'] != 'completed' &&
+                   $kyc['step']['taxation']['status'] != 'completed' &&
+                   $kyc['step']['holdimg']['status'] != 'completed')
+                {
+                    return $this->render(array('json' => array('success'=>0,
+                      'now'=>time(),
+                      'error'=>'step incompleted!'
+                    )));
+                }
+
+
                   ////////////////////////////////////////Send Email
                   // $emaildata = array(
                   //  'kyc_id'=>$kyc['kyc_id'],
@@ -1685,6 +1699,9 @@ class KycController extends \lithium\action\Controller {
                      'now'=>time(),
                      'result'=>'Submit success!'
                    ))); 
+
+
+
               }else{
                 return $this->render(array('json' => array('success'=>0,
                   'now'=>time(),
@@ -1841,7 +1858,8 @@ class KycController extends \lithium\action\Controller {
       }else{
            extract($this->request->data);
            $conditions = array('key' => $key);
-           $record = Apps::find('first',array('conditions'=>$conditions))->to('array');
+           $record = Apps::find('first',array('conditions'=>$conditions));
+        
           if(count($record)!=0){
 
               $conditions = array('hash' => $record['hash'],'kyc_id'=>$kyc_id);
@@ -1851,9 +1869,9 @@ class KycController extends \lithium\action\Controller {
                 
                 $wallets = [];
                 foreach ($record['wallets'] as $k => $v) { 
-                     $XGCWallet = XGCUsers::find('first',array(
-                        'conditions'=>['walletid' => $v['walletid']]
-                      ))->to('array');
+                  $XGCWallet = XGCUsers::find('first',array(
+                      'conditions'=>['walletid' => $v['walletid']]
+                    ))->to('array');
 
                      $wallets[$k] = array(
                       'walletid' =>$record['wallets'][$k]['walletid'],
@@ -2032,7 +2050,8 @@ class KycController extends \lithium\action\Controller {
           if($image_name['filename']!=""){
               $image_name_name = $image_name['_id'].'_'.$image_name['filename'];
               $path = LITHIUM_APP_PATH . '/webroot/documents/'.$image_name_name;
-              $return_path = 'http://hitarth:8888/documents/'.$image_name_name;
+              //$return_path = 'http://hitarth:8888/documents/'.$image_name_name;
+              $return_path = 'http://192.168.10.131:8888/hitarth.org/documents/'.$image_name_name;
               file_put_contents($path, $image_name->file->getBytes());
               return $return_path;
           }

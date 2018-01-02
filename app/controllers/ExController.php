@@ -3,6 +3,7 @@ namespace app\controllers;
 
 use app\extensions\action\Uuid;
 use app\models\Apps;
+use app\models\KYCDocuments;
 use app\models\XGCDetails;
 use app\models\XGCUsers;
 use MongoID;  
@@ -120,7 +121,14 @@ class ExController extends \lithium\action\Controller {
             'now'=>time(),
             'error'=>'Email required!'
           )));
-        }  
+        }
+
+        if(Validator::rule('email',$this->request->data['email'])==""){
+            return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'Email not correct!'       
+            )));
+          }  
 
         if($this->request->data['phone'] ==null || $this->request->data['phone']==""){
           return $this->render(array('json' => array('success'=>0,
@@ -182,9 +190,8 @@ class ExController extends \lithium\action\Controller {
           extract($this->request->data);   
           $password = password_hash($password, PASSWORD_BCRYPT);
 
-          $record = Apps::find('first',array('conditions' => array('key'=>$key)))->to('array');    
+          $record = Apps::find('first',array('conditions' => array('key'=>$key)));   
           if(count($record) > 0){
-
             $checkId = Apps::find('first',array('conditions' => array('key'=>$key, 'wallets.walletid' => $walletid)));
             if(count($checkId)!=0){
                 return $this->render(array('json' => array('success'=>0,
@@ -193,7 +200,7 @@ class ExController extends \lithium\action\Controller {
                 )));
             }
 
-
+            $record = $record->to('array');
             $walletAry = count($record['wallets']) > 0 ? $record['wallets'] : array();
             $newWallet = array(
                 'walletid' => $walletid,
@@ -230,6 +237,7 @@ class ExController extends \lithium\action\Controller {
               'email'=>$email,
               'xemail'=>$xemail,
               'phone'=>$phone,
+              'country_code'=>$country_code,
               'xphone'=>$xphone,
               'code'=>$code,
               'xcode'=>$xcode,
@@ -244,14 +252,20 @@ class ExController extends \lithium\action\Controller {
               'email'=>$email,
               'xemail'=>$xemail,
               'phone'=>$phone,
+              'country_code'=>$country_code,
               'xphone'=>$xphone,
               'code'=>$code,
               'xcode'=>$xcode,
             )));   
+          }else{
+            return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'Invalid Key!'
+            ))); 
           }    
       }
 
-      public function setpublickey($key = null){        
+      public function setgreencoinaddress($key = null){        
           if($key==null || $key==""){
             return $this->render(array('json' => array('success'=>0,
                 'now'=>time(),
@@ -259,12 +273,122 @@ class ExController extends \lithium\action\Controller {
             )));
           }    
 
-          if($this->request->data['publickey'] ==null || $this->request->data['publickey']==""){
+          if($this->request->data['walletid'] ==null || $this->request->data['walletid']==""){
             return $this->render(array('json' => array('success'=>0,
               'now'=>time(),
-              'error'=>'public key required!'
+              'error'=>'wallet id required!'
             )));
           }
+
+          if($this->request->data['pubkey'] ==null || $this->request->data['pubkey']==""){
+            return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'pub key required!'
+            )));
+          }
+          extract($this->request->data);
+
+          $record = Apps::find('first',array('conditions' => array('key'=>$key)));    
+          if(count($record) > 0){
+              $XGCUsers = XGCUsers::find('first',array('conditions' => array('walletid'=>$walletid)));    
+              if(count($XGCUsers) > 0){
+                  $data['greencoinAddress'] = (object) array('0' => $pubkey);
+                  $conditions = array('walletid' => $walletid);
+                  XGCUsers::update($data,$conditions);
+
+                  return $this->render(array('json' => array('success'=>1,
+                    'now'=>time(),
+                    'result'=>'Greencoin address set success',
+                    'walletid'=>$walletid,
+                  )));
+              }else{
+                return $this->render(array('json' => array('success'=>0,
+                  'now'=>time(),
+                  'error'=>'Invalid Wallet Id!'
+                ))); 
+              }  
+          
+          }else{
+            return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'Invalid Key!'
+            ))); 
+          }      
+      }
+
+      public function getWallet($key = null){
+
+    
+
+        if($key==null || $key==""){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Key missing!'
+          )));
+        }else{
+             extract($this->request->data);
+             $conditions = array('key' => $key);
+             $record = Apps::find('first',array('conditions'=>$conditions));
+            if(count($record)!=0){
+
+                $conditions = array('hash' => $record['hash']);
+                $document = KYCDocuments::find('first',array('conditions'=>$conditions));
+                
+                if(count($document)!=0){            
+                  
+                  $wallets = [];
+                  foreach ($record['wallets'] as $k => $v) { 
+                    $XGCWallet = XGCUsers::find('first',array(
+                        'conditions'=>['walletid' => $v['walletid']]
+                      ))->to('array');
+
+                       $wallets[$k] = array(
+                        'walletid' => $record['wallets'][$k]['walletid'],
+                        'name' => $record['wallets'][$k]['walletName'],
+                        'kyc_id'=> $document['kyc_id'],
+                        'email'=> $XGCWallet['email'],
+                        'phone'=> $XGCWallet['phone'],
+                        'currency'=> $record['wallets'][$k]['walletCurrency']
+                        );
+                  }  
+                   return $this->render(array('json' => array('success'=>1,
+                    'now'=>time(),
+                    'result' =>'Wallet list',
+                    'wallets' => $wallets
+
+                   )));
+
+                }else{
+                   return $this->render(array('json' => array('success'=>0,
+                    'now'=>time(),
+                    'error'=>'Kyc id wrong!'
+                  )));
+                }
+                
+            }else{
+                return $this->render(array('json' => array('success'=>0,
+                'now'=>time(),
+                'error'=>'Invalid Key!'
+                )));    
+            }
+        }   
+      }
+
+      public function testing($key = null){        
+
+          if($key==null || $key==""){
+            return $this->render(array('json' => array('success'=>0,
+                'now'=>time(),
+                'error'=>'Key missing!'
+            )));
+          }
+
+          $data = ['wallets' =>['a' => 'test12526354']];
+          $conditions = array('key' => $key);
+          $option = array('Server');
+          Apps::update($data,$conditions,$option);
+
+          print_r(Apps::find('first',array('conditions' => array('key'=>$key)))->data());
       }
 }
 ?>
