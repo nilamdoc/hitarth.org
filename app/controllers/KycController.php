@@ -168,353 +168,624 @@ class KycController extends \lithium\action\Controller {
     		)));
 	  }
 
-    public function verifyemail($key = null){
-      if($key==null || $key==""){
-        return $this->render(array('json' => array('success'=>0,
-        'now'=>time(),
-        'error'=>'Key missing!'
-       )));
-      }else{
+    // public function verifyemail($key = null){
+    //   if($key==null || $key==""){
+    //     return $this->render(array('json' => array('success'=>0,
+    //     'now'=>time(),
+    //     'error'=>'Key missing!'
+    //    )));
+    //   }else{
 
-           $conditions = array('key' => $key);
-           $record = Apps::find('first',array('conditions'=>$conditions));
+    //        $conditions = array('key' => $key,'isdelete' =>'0');
+    //        $record = Apps::find('first',array('conditions'=>$conditions));
 
-           if(count($record)!=0){
-              $conditions = array('hash' => $record['hash'],'step.issubmit' => 'y');
-              $document = KYCDocuments::find('first',array('conditions'=>$conditions));               
+    //        if(count($record)!=0){
+    //           $conditions = array('hash' => $record['hash'],'step.issubmit' => 'y');
+    //           $document = KYCDocuments::find('first',array('conditions'=>$conditions));               
               
 
-              // echo "<pre>";
-              // print_r($document->to('array'));
-              // exit();
+    //           // echo "<pre>";
+    //           // print_r($document->to('array'));
+    //           // exit();
 
-              if(count($document) == 0){
+    //           if(count($document) == 0){
                 
-                $data = array('process'=>'email verify');
-                Apps::update($data,$conditions);
+    //             $data = array('process'=>'email verify');
+    //             Apps::update($data,$conditions);
 
-                  if($this->request->data){
-                   if($this->request->data['email']){
+    //               if($this->request->data){
+    //                if($this->request->data['email']){
 
-                        $email = strtolower($this->request->data['email']);
-                        $uuid = new Uuid();
-                      $emails = kycDocuments::find('first',array(
-                         'conditions'=>array('email'=>$email)
-                        ));
-                        $data = array(
-                         'email' => strtolower($this->request->data['email']),
-                         'hash'=>md5(strtolower($this->request->data['email']))
-                        );
-                        $conditions = array(
-                         'key' => $key 
-                        );
-                        Apps::update($data,$conditions);
+    //                     $email = strtolower($this->request->data['email']);
+    //                     $uuid = new Uuid();
+    //                   $emails = kycDocuments::find('first',array(
+    //                      'conditions'=>array('email'=>$email)
+    //                     ));
+    //                     $data = array(
+    //                      'email' => strtolower($this->request->data['email']),
+    //                      'hash'=>md5(strtolower($this->request->data['email']))
+    //                     );
+    //                     $conditions = array(
+    //                      'key' => $key 
+    //                     );
+    //                     Apps::update($data,$conditions);
 
-                         if(count($emails)===0){
-                            $kyc_id = $uuid->v4v();
-                            $email_code = substr($kyc_id,0,4);
-                            $data = array(
-                             'kyc_id'=>$kyc_id,
-                             'email_code'=>$email_code,
-                             'email'=>$email,
-                             'hash'=>md5($email),
-                             'IP'=>$_SERVER['REMOTE_ADDR']
-                            );
-                            $Documents = kycDocuments::create($data);
-                            $saved = $Documents->save();
-                         }else{
-                          $emails = kycDocuments::find('first',array(
-                    				   'conditions'=>array('email'=>$email)
-                    			   ));
+    //                      if(count($emails)===0){
+    //                         $kyc_id = $uuid->v4v();
+    //                         $email_code = substr($kyc_id,0,4);
+    //                         $data = array(
+    //                          'kyc_id'=>$kyc_id,
+    //                          'email_code'=>$email_code,
+    //                          'email'=>$email,
+    //                          'hash'=>md5($email),
+    //                          'IP'=>$_SERVER['REMOTE_ADDR']
+    //                         );
+    //                         $Documents = kycDocuments::create($data);
+    //                         $saved = $Documents->save();
+    //                      }else{
+    //                       $emails = kycDocuments::find('first',array(
+    //                 				   'conditions'=>array('email'=>$email)
+    //                 			   ));
                     		
-                            $kyc_id = $emails['kyc_id'];
-                            $email_code = $emails['email_code'];
-                            if($emails['Verify']['Score']>=80){
-                              return $this->render(array('json' => array(
-                               'success'=>0,
-                               'error'=>'Aleredy KYC complete'
-                              )));	
-                            }
-                         }
+    //                         $kyc_id = $emails['kyc_id'];
+    //                         $email_code = $emails['email_code'];
+    //                         if($emails['Verify']['Score']>=80){
+    //                           return $this->render(array('json' => array(
+    //                            'success'=>0,
+    //                            'error'=>'Aleredy KYC complete'
+    //                           )));	
+    //                         }
+    //                      }
 
 
-                     ////////////////////////////////////////Send Email
-                				// $emaildata = array(
-                				// 	'kyc_id'=>$email_code,
-                				// 	'email'=>$email
-                				// );
-                				// $function = new Functions();
-                				// $compact = array('data'=>$emaildata);
-                				// $from = array(NOREPLY => "noreply@".COMPANY_URL);
-                				// $email = $email;
-                				// $function->sendEmailTo($email,$compact,'process','sendKYC',"KYCGlobal - Email Code",$from,'','','',null);
-                     //////////////////////////////////////////////////////////////////////
+    //                  ////////////////////////////////////////Send Email
+    //             				// $emaildata = array(
+    //             				// 	'kyc_id'=>$email_code,
+    //             				// 	'email'=>$email
+    //             				// );
+    //             				// $function = new Functions();
+    //             				// $compact = array('data'=>$emaildata);
+    //             				// $from = array(NOREPLY => "noreply@".COMPANY_URL);
+    //             				// $email = $email;
+    //             				// $function->sendEmailTo($email,$compact,'process','sendKYC',"KYCGlobal - Email Code",$from,'','','',null);
+    //                  //////////////////////////////////////////////////////////////////////
                      
                         
                      
-                       return $this->render(array('json' => array(
-                        'success'=>1,
-                        'email_code'=>$email_code,
-                    		'Server'=>md5($_SERVER["SERVER_ADDR"]),
-                        'Refer'=>md5($_SERVER["REMOTE_ADDR"])
-                       )));
-                     }
-                  }else{
-                    return $this->render(array('json' => array('success'=>0,
-                    'now'=>time(),
-                    'error'=>'No Email Specified!'
-                    )));         
-                  }
-              }else{
-                return $this->render(array('json' => array('success'=>1,
-                  'now'=>time(),
-                  'email_code'=>$document['email_code'],
-                  'result'=>'Aleredy Your Email verify!'
-                )));    
-              }    
+    //                    return $this->render(array('json' => array(
+    //                     'success'=>1,
+    //                     'email_code'=>$email_code,
+    //                 		'Server'=>md5($_SERVER["SERVER_ADDR"]),
+    //                     'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+    //                    )));
+    //                  }
+    //               }else{
+    //                 return $this->render(array('json' => array('success'=>0,
+    //                 'now'=>time(),
+    //                 'error'=>'No Email Specified!'
+    //                 )));         
+    //               }
+    //           }else{
+    //             return $this->render(array('json' => array('success'=>1,
+    //               'now'=>time(),
+    //               'email_code'=>$document['email_code'],
+    //               'result'=>'Aleredy Your Email verify!'
+    //             )));    
+    //           }    
 
-           }else{
-              return $this->render(array('json' => array('success'=>0,
-              'now'=>time(),
-              'error'=>'Invalid Key!'
-              )));    
-           }
-      }
-    }
+    //        }else{
+    //           return $this->render(array('json' => array('success'=>0,
+    //           'now'=>time(),
+    //           'error'=>'Invalid Key!'
+    //           )));    
+    //        }
+    //   }
+    // }
 
-    public function checkemailcode($key = null){
+    // public function checkemailcode($key = null){
+    //   if($key==null || $key==""){
+    //     return $this->render(array('json' => array('success'=>0,
+    //     'now'=>time(),
+    //     'error'=>'Key missing!'
+    //    )));
+    //   }else{
+    //     if($this->request->data){
+    //      if($this->request->data['code']){
+    //         $record = Apps::find('first',array('conditions'=>array('key' => $key,'isdelete' =>'0')));
+    //         if(count($record)!=0){
+    //             $conditions = array('hash'=>$record['hash'],'email_code'=>$this->request->data['code']);
+    //             $find = kycDocuments::find('first',array(
+    //               'conditions' => $conditions
+    //             ));
+
+    //             if(count($find)===0){
+    //               return $this->render(array('json' => array('success'=>0,
+    //                 'now'=>time(),
+    //                 'error'=>'Code Invalid',
+    //             		'Server'=>md5($_SERVER["SERVER_ADDR"]),
+    //                 'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+    //                 )));
+    //             }else{
+    //              return $this->render(array('json' => array('success'=>1,
+    //               'now'=>time(),
+    //               'result'=>'Code Valid',
+    //           		'Server'=>md5($_SERVER["SERVER_ADDR"]),
+    //               'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+    //              )));
+    //             }
+    //         }else{
+    //           return $this->render(array('json' => array('success'=>0,
+    //             'now'=>time(),
+    //             'error'=>'Invalid Key!'
+    //           ))); 
+    //         }    
+    //      }else{
+    //        return $this->render(array('json' => array('success'=>0,
+    //         'now'=>time(),
+    //         'error'=>'Code Invalid',
+    //     		'Server'=>md5($_SERVER["SERVER_ADDR"]),
+    //         'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+    //         )));
+                
+    //      }
+    //     }
+       
+    //   }
+    // }
+
+    // public function sendmobilecode($key=null){
+    //   if($key==null || $key==""){
+    //     return $this->render(array('json' => array('success'=>0,
+    //     'now'=>time(),
+    //     'error'=>'Key missing!'
+    //    )));
+    //   }else{
+    //       $conditions = array('key' => $key,'isdelete' =>'0');
+    //       $record = Apps::find('first',array('conditions'=>$conditions));
+        
+    //       // echo "<pre>";
+    //       // print_r($record->to('array'));
+    //       // exit();
+
+
+    //       if(count($record)!=0){
+    //         $data = array('process'=>'send mobile code');
+    //         Apps::update($data,$conditions);   
+    //       }else{
+    //         return $this->render(array('json' => array('success'=>0,
+    //           'now'=>time(),
+    //           'error'=>'Invalid Key!'
+    //         ))); 
+    //       }
+
+    //       // $conditions = array('hash' => $record['hash'],'step.issubmit' => 'y');
+    //       // $document = KYCDocuments::find('first',array('conditions'=>$conditions));
+
+    //       // if(count($document) != 0){
+    //       //   return $this->render(array('json' => array('success'=>1,
+    //       //     'now'=>time(),
+    //       //     'phone_code'=>$record['phone_code'],
+    //       //     'result'=>'Aleredy Your Mobile verify!'
+    //       //   )));    
+    //       // }  
+
+
+    //    if($this->request->data){
+    //       if($this->request->data['mobile']==null || $this->request->data['mobile']=="") {
+    //         return $this->render(array('json' => array('success'=>0,
+    //          'now'=>time(),
+    //          'error'=>'Mobile number required!'
+    //         )));
+    //       }
+
+    //       if($this->request->data['country_code']==null || $this->request->data['country_code']=="") {
+    //        return $this->render(array('json' => array('success'=>0,
+    //         'now'=>time(),
+    //         'error'=>'Country code required!'
+    //        )));
+    //       }
+        	
+    //       $ga = new GoogleAuthenticator();
+    //       $secret = $ga->createSecret(64);
+    //       $signinCode = $ga->getCode($secret);	
+    //       $function = new Functions();
+    //       $phone = $this->request->data['mobile'];
+    //       $country_code = $this->request->data['country_code'];
+    //       if(substr($phone,0,1)=='+'){
+    //         $phone = str_replace("+","",$phone);
+    //       }
+    //       $data = array(
+    //        'phone'=>$phone,
+    //        'phone_code'=>$signinCode,
+    //        'country_code'=>$country_code
+    //       );
+    //       $conditions = array(
+    //        'key' => $key 
+    //       );
+    //       Apps::update($data,$conditions);   
+    //       $msg = 'Please enter GreenCoinX mobile verification code: '.$signinCode.'.';
+    //       $returnvalues = $function->twilio($phone,$msg,$signinCode);	 // Testing if it works 
+          
+    //         return $this->render(array('json' => array('success'=>1,
+    //           'now'=>time(),
+    //           'phone_code'=>$signinCode,
+    //           'country_code' =>$country_code,
+    //           'phone'=>$phone,
+    //       		'Server'=>md5($_SERVER["SERVER_ADDR"]),
+    //           'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+    //          )));
+    //      }
+    //   }
+    // }
+
+    // public function checkmobilecode($key = null){
+
+
+    //   if($key==null || $key==""){
+    //     return $this->render(array('json' => array('success'=>0,
+    //     'now'=>time(),
+    //     'error'=>'Key missing!'
+    //    )));
+    //   }else{
+    //      if($this->request->data['code']){
+    //       $record = Apps::find('first',array('conditions'=>array('key' => $key,'phone_code'=>$this->request->data['code'])));
+    //         if(count($record)!=0){
+    //             $conditions = array('hash'=>$record['hash']);
+    //             $find = kycDocuments::find('first',array('conditions' => $conditions));
+
+    //             if(count($find)===0){
+    //               return $this->render(array('json' => array('success'=>0,
+    //                 'now'=>time(),
+    //                 'error'=>'Otp Code Invalid',
+    //                 'Server'=>md5($_SERVER["SERVER_ADDR"]),
+    //                 'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+    //                 )));
+    //             }else{
+    //              return $this->render(array('json' => array('success'=>1,
+    //               'now'=>time(),
+    //               'result'=>'Otp Code Valid',
+    //               'Server'=>md5($_SERVER["SERVER_ADDR"]),
+    //               'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+    //              )));
+    //             }
+    //         }else{
+    //           return $this->render(array('json' => array('success'=>0,
+    //             'now'=>time(),
+    //             'error'=>'Otp Code Invalid!'
+    //           ))); 
+    //         }    
+    //      }else{
+    //        return $this->render(array('json' => array('success'=>0,
+    //         'now'=>time(),
+    //         'error'=>'Otp Code Required!',
+    //         'Server'=>md5($_SERVER["SERVER_ADDR"]),
+    //         'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+    //         )));     
+    //      }
+    //     }
+    // }
+
+    // public function saveaadhar($key=null){
+    
+    //   if($key==null || $key==""){
+    //     return $this->render(array('json' => array('success'=>0,
+    //     'now'=>time(),
+    //     'error'=>'Key missing!'
+    //    )));
+    //   }else{
+    //    $conditions = array(
+    //     'key' => $key,'isdelete' =>'0' 
+    //    );
+      
+    //    $record = Apps::find('first',array(
+    //     'conditions'=>$conditions
+    //    ));
+       
+    //    if(count($record)!=0){
+    //     $data = array(
+    //      'process'=>'save aadhar'
+    //     );
+    //     Apps::update($data,$conditions);   
+    //    }else{
+    //     return $this->render(array('json' => array('success'=>0,
+    //     'now'=>time(),
+    //     'error'=>'Invalid Key!'
+    //     ))); 
+    //    }
+       
+    //    if($this->request->data){
+    //     if($this->request->data['aadhar_fname']==null || $this->request->data['aadhar_fname']=="") {
+    //      return $this->render(array('json' => array('success'=>0,
+    //       'now'=>time(),
+    //       'error'=>'First Name Required!'
+    //      )));
+    //     }
+    //     if($this->request->data['aadhar_lname']==null || $this->request->data['aadhar_lname']=="") {
+    //      return $this->render(array('json' => array('success'=>0,
+    //       'now'=>time(),
+    //       'error'=>'Last Name Required!'
+    //      )));
+    //     }     
+        
+        
+    //     return $this->render(array('json' => array('success'=>1,
+    //     'now'=>time(),
+    //     'error'=>'Data saved!',
+    //     ))); 
+        
+    //    }else{
+        
+    //     return $this->render(array('json' => array('success'=>0,
+    //     'now'=>time(),
+    //     'error'=>'No Post!'
+    //     ))); 
+    //    }
+    //   }
+    // }
+
+
+    public function verifyemail($key=null){
       if($key==null || $key==""){
         return $this->render(array('json' => array('success'=>0,
-        'now'=>time(),
-        'error'=>'Key missing!'
+          'now'=>time(),
+          'error'=>'Key missing!'
+        ))); 
+      }
+
+      if(Validator::rule('email',$this->request->data['email'])==""){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Email not correct!'       
+          )));
+      }
+
+      extract($this->request->data);
+
+      $conditions = array('key' => $key);
+      $record = Apps::find('first',array('conditions'=>$conditions));
+
+      if(count($record)!=0){
+        $uuid = new Uuid();
+        $kyc_id = $uuid->v4v();
+        $email = strtolower($email);
+        $email_code = substr($kyc_id,0,4);
+          
+        ////////////////////////////////////////Send Email
+          // $emaildata = array(
+          //  'kyc_id'=>$email_code,
+          //  'email'=>$email
+          // );
+          // $function = new Functions();
+          // $compact = array('data'=>$emaildata);
+          // $from = array(NOREPLY => "noreply@".COMPANY_URL);
+          // $email = $email;
+          // $function->sendEmailTo($email,$compact,'process','sendKYC',"KYCGlobal - Email Code",$from,'','','',null);
+        //////////////////////////////////////////////////////////////////////
+          
+          $filed = ['email'=>$email,'email_code'=>$email_code];
+          $conditions = array('key' => $key);
+          Apps::update($filed,$conditions);
+
+
+       return $this->render(array('json' => array('success'=>1,
+        'result' => 'Email send code successfully',
+        'email_code'=>$email_code,
+        'email' => $this->request->data['email']
        )));
       }else{
-        if($this->request->data){
-         if($this->request->data['code']){
-            $record = Apps::find('first',array('conditions'=>array('key' => $key)));
-            if(count($record)!=0){
-                $conditions = array('hash'=>$record['hash'],'email_code'=>$this->request->data['code']);
-                $find = kycDocuments::find('first',array(
-                  'conditions' => $conditions
-                ));
-
-                if(count($find)===0){
-                  return $this->render(array('json' => array('success'=>0,
-                    'now'=>time(),
-                    'error'=>'Code Invalid',
-                		'Server'=>md5($_SERVER["SERVER_ADDR"]),
-                    'Refer'=>md5($_SERVER["REMOTE_ADDR"])
-                    )));
-                }else{
-                 return $this->render(array('json' => array('success'=>1,
-                  'now'=>time(),
-                  'result'=>'Code Valid',
-              		'Server'=>md5($_SERVER["SERVER_ADDR"]),
-                  'Refer'=>md5($_SERVER["REMOTE_ADDR"])
-                 )));
-                }
-            }else{
-              return $this->render(array('json' => array('success'=>0,
-                'now'=>time(),
-                'error'=>'Invalid Key!'
-              ))); 
-            }    
-         }else{
-           return $this->render(array('json' => array('success'=>0,
-            'now'=>time(),
-            'error'=>'Code Invalid',
-        		'Server'=>md5($_SERVER["SERVER_ADDR"]),
-            'Refer'=>md5($_SERVER["REMOTE_ADDR"])
-            )));
-                
-         }
-        }
-       
-      }
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Invalid Key!'
+        )));  
+      } 
     }
 
     public function sendmobilecode($key=null){
       if($key==null || $key==""){
         return $this->render(array('json' => array('success'=>0,
-        'now'=>time(),
-        'error'=>'Key missing!'
-       )));
-      }else{
-          $conditions = array('key' => $key);
-          $record = Apps::find('first',array('conditions'=>$conditions));
-       
-          if(count($record)!=0){
-            $data = array('process'=>'send mobile code');
-            Apps::update($data,$conditions);   
-          }else{
-            return $this->render(array('json' => array('success'=>0,
-              'now'=>time(),
-              'error'=>'Invalid Key!'
-            ))); 
-          }
-
-          $conditions = array('hash' => $record['hash'],'step.issubmit' => 'y');
-          $document = KYCDocuments::find('first',array('conditions'=>$conditions));
-
-          if(count($document) != 0){
-            return $this->render(array('json' => array('success'=>1,
-              'now'=>time(),
-              'phone_code'=>$record['phone_code'],
-              'result'=>'Aleredy Your Mobile verify!'
-            )));    
-          }  
-
-
-       if($this->request->data){
-          if($this->request->data['mobile']==null || $this->request->data['mobile']=="") {
-            return $this->render(array('json' => array('success'=>0,
-             'now'=>time(),
-             'error'=>'Mobile number required!'
-            )));
-          }
-
-          if($this->request->data['country_code']==null || $this->request->data['country_code']=="") {
-           return $this->render(array('json' => array('success'=>0,
-            'now'=>time(),
-            'error'=>'Country code required!'
-           )));
-          }
-        	
-          $ga = new GoogleAuthenticator();
-          $secret = $ga->createSecret(64);
-          $signinCode = $ga->getCode($secret);	
-          $function = new Functions();
-          $phone = $this->request->data['mobile'];
-          if(substr($phone,0,1)=='+'){
-            $phone = str_replace("+","",$phone);
-          }
-          $data = array(
-           'phone'=>$phone,
-           'phone_code'=>$signinCode,
-          );
-          $conditions = array(
-           'key' => $key 
-          );
-          Apps::update($data,$conditions);   
-          $msg = 'Please enter GreenCoinX mobile verification code: '.$signinCode.'.';
-          $returnvalues = $function->twilio($phone,$msg,$signinCode);	 // Testing if it works 
-          
-            return $this->render(array('json' => array('success'=>1,
-              'now'=>time(),
-              'phone_code'=>$signinCode,
-              'phone'=>$phone,
-          		'Server'=>md5($_SERVER["SERVER_ADDR"]),
-              'Refer'=>md5($_SERVER["REMOTE_ADDR"])
-             )));
-         }
+          'now'=>time(),
+          'error'=>'Key missing!'
+        ))); 
       }
+
+      if($this->request->data['mobile']==null || $this->request->data['mobile']==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Mobile missing!'
+        )));
+      }
+
+      if($this->request->data['country_code']==null || $this->request->data['country_code']==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Country code missing!'
+        )));
+      }
+
+      extract($this->request->data);
+      $conditions = array('key' => $key);
+      $record = Apps::find('first',array('conditions'=>$conditions));
+      if(count($record)!=0){
+        $ga = new GoogleAuthenticator();
+        $secret = $ga->createSecret(64);
+        $signinCode = $ga->getCode($secret);  
+        $function = new Functions();
+        $phone = $this->request->data['mobile'];
+        if(substr($phone,0,1)=='+'){
+          $phone = str_replace("+","",$phone);
+        }
+      
+        $msg = 'Please enter GreenCoinX mobile verification code: '.$signinCode.'.';
+        $returnvalues = $function->twilio($phone,$msg,$signinCode);  // Testing if it works 
+        
+          $filed = ['phone'=>$mobile,'country_code' => $country_code,'phone_code'=>$signinCode];
+          $conditions = array('key' => $key);
+          Apps::update($filed,$conditions);
+
+        return $this->render(array('json' => array('success'=>1,
+          'now'=>time(),
+          'result' => 'Mobile send code successfully',
+          'phone_code'=>$signinCode,
+          'phone'=>$phone,
+          'country_code' => $country_code
+        )));    
+      }else{
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Invalid Key!'
+        )));  
+      } 
     }
 
-    public function checkmobilecode($key = null){
-
-
+    public function createupdatekyc($key = null){
       if($key==null || $key==""){
         return $this->render(array('json' => array('success'=>0,
-        'now'=>time(),
-        'error'=>'Key missing!'
-       )));
-      }else{
-         if($this->request->data['code']){
-          $record = Apps::find('first',array('conditions'=>array('key' => $key,'phone_code'=>$this->request->data['code'])));
-            if(count($record)!=0){
-                $conditions = array('hash'=>$record['hash']);
-                $find = kycDocuments::find('first',array('conditions' => $conditions));
+          'now'=>time(),
+          'error'=>'Key missing!'
+        )));
+      }
 
-                if(count($find)===0){
-                  return $this->render(array('json' => array('success'=>0,
-                    'now'=>time(),
-                    'error'=>'Otp Code Invalid',
+      if($this->request->data['email']==null || $this->request->data['email']==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Email missing!'
+        )));
+      }
+
+      if($this->request->data['email_code']==null || $this->request->data['email_code']==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'email code missing!'
+        )));
+      }
+
+      if($this->request->data['mobile']==null || $this->request->data['mobile']==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Mobile missing!'
+        )));
+      }
+
+      if($this->request->data['mobile_code']==null || $this->request->data['mobile_code']==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Mobile Code missing!'
+        )));
+      }
+
+      if($this->request->data['country_code']==null || $this->request->data['country_code']==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Country code missing!'
+        )));
+      }
+
+      if($this->request->data['IP']==null || $this->request->data['IP']==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'IP missing!'
+        )));
+      }
+      
+      extract($this->request->data);
+      $email = strtolower($email);
+      $conditions = array('key' => $key,'email' => $email,'email_code' => $email_code,
+                          'phone' => $mobile,'phone_code' => $mobile_code);
+      $record = Apps::find('first',array('conditions'=>$conditions));
+      if(count($record)!=0){
+          $conditions = array('email' => $email,'phone' => $mobile,'isdelete' =>'0');
+          $chk = Apps::find('first',array('conditions'=>$conditions));
+            
+          if(count($chk) != 0){
+
+             if($chk['key'] != $key){
+
+                $data['email'] = $chk['email'];
+                $data['hash'] = $chk['hash'];
+                $data['phone'] = $chk['phone'];
+                $data['phone_code'] = $chk['phone_code'];
+                $data['country_code'] = $chk['country_code'];
+                $data['isdelete'] = '0';
+                $data['IP'] = $IP;
+                $conditions = array('key' => $key);
+                Apps::update($data,$conditions);
+
+
+                $filed = ['isdelete' => '1'];
+                $conditions = array('key' => $chk['key']);
+                Apps::update($filed,$conditions);    
+             }
+
+              return $this->render(array('json' => array(
+                'success'=>1,
+                'result' => 'success',
+                'Server'=>md5($_SERVER["SERVER_ADDR"]),
+                'Refer'=>md5($_SERVER["REMOTE_ADDR"])
+              )));
+
+
+                // $conditions = array('hash' => $chk['hash'],'step.issubmit' => 'y');
+                // $document = KYCDocuments::find('first',array('conditions'=>$conditions));               
+            
+                // if(count($document) == 0){
+                //   return $this->render(array('json' => array('success'=>1,
+                //     'now'=>time(),
+                //     'result'=>'success'
+                //   )));
+                
+                // }else{
+                //   return $this->render(array('json' => array('success'=>1,
+                //     'now'=>time(),
+                //     'result'=>'Aleredy Your Email verify!'
+                //   ))); 
+                // }
+
+
+          }else{
+            // new Kyc
+            /* **** */
+                $uuid = new Uuid();
+                $emails = kycDocuments::find('first',array(
+                    'conditions'=>array('email'=>$email)
+                ));
+                  
+                  $data = array(
+                    'email' => strtolower($email),
+                    'hash'=>md5(strtolower($email)),
+                    'isdelete'=>'0'
+                  );
+                  $conditions = array('key' => $key);
+                  Apps::update($data,$conditions);
+
+                  $kyc_id = $uuid->v4v();
+                  $email_code = substr($kyc_id,0,4);
+                  $data = array(
+                     'kyc_id'=>$kyc_id,
+                     'email'=>$email,
+                     'phone' =>$mobile,
+                     'hash'=>md5(strtolower($email)),
+                     'IP'=>$_SERVER['REMOTE_ADDR']
+                  );
+
+                  $Documents = kycDocuments::create($data);
+                  $saved = $Documents->save();
+                        
+                  return $this->render(array('json' => array(
+                    'success'=>1,
+                    'result' => 'success',
                     'Server'=>md5($_SERVER["SERVER_ADDR"]),
                     'Refer'=>md5($_SERVER["REMOTE_ADDR"])
-                    )));
-                }else{
-                 return $this->render(array('json' => array('success'=>1,
-                  'now'=>time(),
-                  'result'=>'Otp Code Valid',
-                  'Server'=>md5($_SERVER["SERVER_ADDR"]),
-                  'Refer'=>md5($_SERVER["REMOTE_ADDR"])
-                 )));
-                }
-            }else{
-              return $this->render(array('json' => array('success'=>0,
-                'now'=>time(),
-                'error'=>'Otp Code Invalid!'
-              ))); 
-            }    
-         }else{
-           return $this->render(array('json' => array('success'=>0,
-            'now'=>time(),
-            'error'=>'Otp Code Required!',
-            'Server'=>md5($_SERVER["SERVER_ADDR"]),
-            'Refer'=>md5($_SERVER["REMOTE_ADDR"])
-            )));     
-         }
-        }
+                  )));
+            /* **** */
+          }
+      }else{
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Invalid Email and Mobile!'
+        ))); 
+      }    
     }
 
-    public function saveaadhar($key=null){
-    
-      if($key==null || $key==""){
-        return $this->render(array('json' => array('success'=>0,
-        'now'=>time(),
-        'error'=>'Key missing!'
-       )));
-      }else{
-       $conditions = array(
-        'key' => $key 
-       );
-      
-       $record = Apps::find('first',array(
-        'conditions'=>$conditions
-       ));
-       
-       if(count($record)!=0){
-        $data = array(
-         'process'=>'save aadhar'
-        );
-        Apps::update($data,$conditions);   
-       }else{
-        return $this->render(array('json' => array('success'=>0,
-        'now'=>time(),
-        'error'=>'Invalid Key!'
-        ))); 
-       }
-       
-       if($this->request->data){
-        if($this->request->data['aadhar_fname']==null || $this->request->data['aadhar_fname']=="") {
-         return $this->render(array('json' => array('success'=>0,
-          'now'=>time(),
-          'error'=>'First Name Required!'
-         )));
-        }
-        if($this->request->data['aadhar_lname']==null || $this->request->data['aadhar_lname']=="") {
-         return $this->render(array('json' => array('success'=>0,
-          'now'=>time(),
-          'error'=>'Last Name Required!'
-         )));
-        }     
-        
-        
-        return $this->render(array('json' => array('success'=>1,
-        'now'=>time(),
-        'error'=>'Data saved!',
-        ))); 
-        
-       }else{
-        
-        return $this->render(array('json' => array('success'=>0,
-        'now'=>time(),
-        'error'=>'No Post!'
-        ))); 
-       }
-      }
-    }
-    
     public function getStepStatus($key = null){
       if($key==null || $key==""){
           return $this->render(array('json' => array('success'=>0,
@@ -523,7 +794,7 @@ class KycController extends \lithium\action\Controller {
           )));
       }else{  
       
-        $record = Apps::find('first',array('conditions'=>array('key' => $key)));
+        $record = Apps::find('first',array('conditions'=>array('key' => $key,'isdelete' =>'0')));
         if(count($record)!=0){
           // $status = ['basic'=>0,'address'=>0,'passport'=>0,'aadhar'=>0,'taxation'=>0,'drivinglicence'=>0,'holdimg'=>0];
           $kyc = kycDocuments::find('first',array('conditions'=>array('hash' => $record['hash'])))->to('array'); 
@@ -546,7 +817,7 @@ class KycController extends \lithium\action\Controller {
             'step' => $step
           )));  
         }else{
-          return $this->render(array('json' => array('success'=>0,
+          return $this->render(array('json' => array('success'=>2,
             'now'=>time(),
             'error'=>'Invalid Key!'
           ))); 
@@ -569,7 +840,7 @@ class KycController extends \lithium\action\Controller {
             'error'=>'step name missing!'
           )));    
       }else{
-         $conditions = array('key' => $key);
+         $conditions = array('key' => $key,'isdelete' =>'0');
          $record = Apps::find('first',array('conditions'=>$conditions));
        
          if(count($record)!=0){
@@ -610,7 +881,7 @@ class KycController extends \lithium\action\Controller {
                   ))); 
                } 
          }else{
-            return $this->render(array('json' => array('success'=>0,
+            return $this->render(array('json' => array('success'=>2,
             'now'=>time(),
             'error'=>'Invalid Key!'
             ))); 
@@ -722,7 +993,7 @@ class KycController extends \lithium\action\Controller {
       }
       else{
         $record = Apps::find('first',array(
-            'conditions'=>array('key' => $key)
+            'conditions'=>array('key' => $key,'isdelete' =>'0')
           ));
          
         if(count($record)!=0){
@@ -759,7 +1030,7 @@ class KycController extends \lithium\action\Controller {
                  break;
              }      
          }else{
-            return $this->render(array('json' => array('success'=>0,
+            return $this->render(array('json' => array('success'=>2,
             'now'=>time(),
             'error'=>'Invalid Key!'
             ))); 
@@ -1641,7 +1912,7 @@ class KycController extends \lithium\action\Controller {
             )));
         }
         else{
-            $record = Apps::find('first',array('conditions'=>array('key' => $key))); 
+            $record = Apps::find('first',array('conditions'=>array('key' => $key,'isdelete' =>'0'))); 
             if(count($record)!=0){
 
               $kyc = KYCDocuments::find('first',array('conditions'=>array('hash' => $record['hash'])))->to('array');
@@ -1711,7 +1982,7 @@ class KycController extends \lithium\action\Controller {
               
 
             }else{
-              return $this->render(array('json' => array('success'=>0,
+              return $this->render(array('json' => array('success'=>2,
                 'now'=>time(),
                 'error'=>'Invalid Key!'
               ))); 
@@ -1744,7 +2015,7 @@ class KycController extends \lithium\action\Controller {
       }  
 
 
-      $record = Apps::find('first',array('conditions'=>array('key' => $key)));
+      $record = Apps::find('first',array('conditions'=>array('key' => $key,'isdelete' =>'0')));
         if(count($record)!=0){
           
           $document = KYCDocuments::find('first',array('conditions'=>array('hash'=>$record['hash'])));
@@ -1776,7 +2047,7 @@ class KycController extends \lithium\action\Controller {
            }   
 
         }else{
-          return $this->render(array('json' => array('success'=>0,
+          return $this->render(array('json' => array('success'=>2,
             'now'=>time(),
             'error'=>'Invalid Key!',
           )));
@@ -1812,7 +2083,7 @@ class KycController extends \lithium\action\Controller {
       }  
 
 
-      $record = Apps::find('first',array('conditions'=>array('key' => $key)));
+      $record = Apps::find('first',array('conditions'=>array('key' => $key,'isdelete' =>'0')));
         if(count($record)!=0){
           $kycImage = $this->request->data['type'];
 
@@ -1835,7 +2106,7 @@ class KycController extends \lithium\action\Controller {
             'key' => $key
           ))); 
         }else{
-          return $this->render(array('json' => array('success'=>0,
+          return $this->render(array('json' => array('success'=>2,
             'now'=>time(),
             'error'=>'Invalid Key!',
           )));
@@ -1843,66 +2114,329 @@ class KycController extends \lithium\action\Controller {
     }
     
 
-    //KYC Login
+    //KYC Login Api *****************************************************************************
+
+    public function verifyloginemail($key=null){
+      if($key==null || $key==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Key missing!'
+        ))); 
+      }
+
+      if($this->request->data['kyc_id']==null || $this->request->data['kyc_id']==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Kyc id missing!'
+        )));
+      }
+
+      if(Validator::rule('email',$this->request->data['email'])==""){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Email not correct!'       
+          )));
+      }  
+
+      extract($this->request->data);
+
+      // echo "<pre>";
+      // print_r($this->request->data);
+      // exit();
+
+     // $record = Apps::find('first',array('conditions'=>array('email' => $email,'isdelete' => '0')));
+     
+      // echo "<pre>";
+      // print_r($record->to('array'));
+      // exit();
+
+     // if(count($record)!=0){
+         $document = kycDocuments::find('first',array('conditions'=>array('email' => $email,'kyc_id' => $kyc_id)));
+
+        //  echo "<pre>";
+        //  print_r($document->to('array'));
+        // exit();
+
+        if(count($document)!=0){
+              // echo "sdfds";
+              // exit();
+              $uuid = new Uuid();
+              $kyc_id = $uuid->v4v();
+              $email_code = substr($kyc_id,0,4);
+            
+              ////////////////////////////////////////Send Email
+                // $emaildata = array(
+                //  'kyc_id'=>$email_code,
+                //  'email'=>$this->request->data['email']
+                // );
+                // $function = new Functions();
+                // $compact = array('data'=>$emaildata);
+                // $from = array(NOREPLY => "noreply@".COMPANY_URL);
+                // $email = $this->request->data['email'];
+                // $function->sendEmailTo($email,$compact,'process','KycLoginEmailVerify',"Login Kyc - Email Code",$from,'','','',null);
+              //////////////////////////////////////////////////////////////////////
+             
+              $filed = ['email' => $email,'email_code'=>$email_code];
+              $conditions = array('key' => $key);
+              Apps::update($filed,$conditions);
+
+
+             return $this->render(array('json' => array('success'=>1,
+              'result' => 'Email send code successfully',
+              'email_code'=>$email_code,
+              'email' => $this->request->data['email']
+             )));
+        }else{
+            return $this->render(array('json' => array('success'=>0,
+                'now'=>time(),
+                'error'=>'Your email invalid this kyc id!'       
+            )));  
+        } 
+     // }
+      // else{
+      //   return $this->render(array('json' => array('success'=>0,
+      //       'now'=>time(),
+      //       'error'=>'Email Invalid!'       
+      //   ))); 
+      // } 
+    }
+
+    public function verifyloginmobile($key=null){
+      if($key==null || $key==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Key missing!'
+        ))); 
+      }
+
+      if($this->request->data['mobile']==null || $this->request->data['mobile']==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Mobile missing!'
+        )));
+      }
+
+      if($this->request->data['country_code']==null || $this->request->data['country_code']==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Country code missing!'
+        )));
+      }
+
+      if($this->request->data['kyc_id']==null || $this->request->data['kyc_id']==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Kyc id missing!'
+        )));
+      }
+
+      if(Validator::rule('email',$this->request->data['email'])==""){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Email not correct!'       
+          )));
+      }  
+      extract($this->request->data);
+
+      // $record = kycDocuments::find('first',array('conditions'=>array('email' => $email,'phone' => $mobile,'kyc_id' => $kyc_id)));
+      // if(count($record)!=0){
+         $document = kycDocuments::find('first',array(
+                  'conditions'=>array('email' => $email,'phone' => $mobile,'kyc_id' => $kyc_id)));
+         if(count($document)!=0){
+              $ga = new GoogleAuthenticator();
+              $secret = $ga->createSecret(64);
+              $signinCode = $ga->getCode($secret);  
+              $function = new Functions();
+              $phone = $this->request->data['mobile'];
+              if(substr($phone,0,1)=='+'){
+                $phone = str_replace("+","",$phone);
+              }
+            
+              $msg = 'Please enter GreenCoinX mobile verification code: '.$signinCode.'.';
+              $returnvalues = $function->twilio($phone,$msg,$signinCode);  // Testing if it works 
+              
+
+               $filed = ['phone'=>$mobile,'country_code' => $country_code,'phone_code'=>$signinCode];
+               $conditions = array('key' => $key);
+               Apps::update($filed,$conditions);
+
+
+              return $this->render(array('json' => array('success'=>1,
+                'now'=>time(),
+                'result' => 'mobile send code successfully',
+                'phone_code'=>$signinCode,
+                'phone'=>$phone,
+                'country_code' => $country_code
+              )));    
+         }else{
+            return $this->render(array('json' => array('success'=>0,
+                'now'=>time(),
+                'error'=>'Your mobile invalid this kyc id!'       
+            )));  
+         } 
+      // }else{
+      //   return $this->render(array('json' => array('success'=>0,
+      //       'now'=>time(),
+      //       'error'=>'Your mobile invalid this kyc id!'       
+      //   ))); 
+      // } 
+    }
+
     public function verifykyc($key = null){
       if($key==null || $key==""){
         return $this->render(array('json' => array('success'=>0,
           'now'=>time(),
           'error'=>'Key missing!'
         )));
-      }else if($this->request->data['kyc_id']==null || $this->request->data['kyc_id']==""){
+      }
+
+      if($this->request->data['kyc_id']==null || $this->request->data['kyc_id']==""){
         return $this->render(array('json' => array('success'=>0,
           'now'=>time(),
           'error'=>'Kyc id missing!'
         )));
-      }else{
-           extract($this->request->data);
-           $conditions = array('key' => $key);
-           $record = Apps::find('first',array('conditions'=>$conditions));
-        
-          if(count($record)!=0){
+      }
 
-              $conditions = array('hash' => $record['hash'],'kyc_id'=>$kyc_id);
-              $document = KYCDocuments::find('first',array('conditions'=>$conditions));
-              
-              if(count($document)!=0){            
-                
-                $wallets = [];
-                foreach ($record['wallets'] as $k => $v) { 
-                  $XGCWallet = XGCUsers::find('first',array(
-                      'conditions'=>['walletid' => $v['walletid']]
-                    ))->to('array');
+      if($this->request->data['email']==null || $this->request->data['email']==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Email missing!'
+        )));
+      }
 
-                     $wallets[$k] = array(
-                      'walletid' =>$record['wallets'][$k]['walletid'],
-                      'name' =>$record['wallets'][$k]['walletName'],
-                      'kyc_id'=>$document['kyc_id'],
-                      'email'=>$XGCWallet['email'],
-                      'phone'=>$XGCWallet['phone'],
-                      'currency'=>$record['wallets'][$k]['walletCurrency']
-                      );
-                }  
-                 return $this->render(array('json' => array('success'=>1,
-                  'now'=>time(),
-                  'result' =>'Kyc document success',
-                  'walletcount' => count($record['wallets']),
-                  'wallets' => $wallets
+      if($this->request->data['mobile']==null || $this->request->data['mobile']==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Mobile missing!'
+        )));
+      }
 
-                 )));
+      if($this->request->data['IP']==null || $this->request->data['IP']==""){
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'IP missing!'
+        )));
+      }
+      
+      extract($this->request->data);
+      // echo $key;
+      // echo "<pre>";
+      // print_r($this->request->data);
+      // exit();
 
-              }else{
-                 return $this->render(array('json' => array('success'=>0,
-                  'now'=>time(),
-                  'error'=>'Kyc id wrong!'
-                )));
-              }
-              
-          }else{
-              return $this->render(array('json' => array('success'=>0,
-              'now'=>time(),
-              'error'=>'Invalid Key!'
-              )));    
+      $conditions = array('key' => $key,'email' => $email,'email_code' => $email_code,
+            'phone' => $mobile,'phone_code' => $mobile_code);
+      $record = Apps::find('first',array('conditions'=>$conditions));
+       
+      // echo "<pre>";
+      // print_r($record->to('array'));
+      // exit();
+
+
+      if(count($record)!=0){
+          $conditions = array('email' => $email,'phone' => $mobile,'isdelete' => '0');
+          $ext = Apps::find('first',array('conditions'=>$conditions));  
+
+      //     echo "<pre>";
+      //     print_r($ext->to('array'));
+      // exit();
+
+          if($ext['key'] != $key){
+
+             $ext = $ext->to('array');
+            
+             $data = []; 
+             $data['isdelete'] = '0';
+             $data['email'] = $ext['email'];
+             $data['phone'] = $ext['phone'];
+             $data['country_code'] = $ext['country_code'];
+             $data['hash'] = $ext['hash'];
+             $data['wallets'] = $ext['wallets'];
+             $data['secondpassword'] = $ext['secondpassword'];
+             $data['sms_notification'] = empty($ext['sms_notification']) ? 0 : $ext['sms_notification'];
+             $data['email_notification'] = empty($ext['email_notification']) ? 0 : $ext['email_notification'];
+             $data['unit'] = empty($ext['unit']) ? 'One' : $ext['unit'];
+             $data['IP'] = $IP;
+
+            
+             $conditions = array('key' => $key);
+             Apps::update($data,$conditions);
+
+             $filed = ['isdelete' => '1'];
+             $conditions = array('key' => $ext['key']);
+             Apps::update($filed,$conditions);
           }
+
+          // echo "dfsd";
+          // exit();
+
+          /* ****** */
+          $record = Apps::find('first',array('conditions'=>array('key' => $key)));
+          
+          // echo "<pre>";
+          // print_r($record->to('array'));
+          // //exit();
+
+          $conditions = array('hash' => $record['hash'],'kyc_id'=>$kyc_id);
+
+//          print_r($conditions);
+
+          $document = KYCDocuments::find('first',array('conditions'=>$conditions));
+
+          // echo "<pre>";
+          // print_r($document->to('array'));
+          // exit();
+          
+          if(count($document)!=0){            
+            $path = $this->getImage($record['hash'],'profile_img'); 
+            $setting = [];
+            $setting['unit'] = $record['unit'];
+            $setting['sms_notification'] = $record['sms_notification'];
+            $setting['email_notification'] = $record['email_notification'];
+
+            $wallets = [];
+            foreach ($record['wallets'] as $k => $v) { 
+              $XGCWallet = XGCUsers::find('first',array(
+                  'conditions'=>['walletid' => $v['walletid']]
+                ))->to('array');
+
+                 $wallets[$k] = array(
+                  'walletid' =>$record['wallets'][$k]['walletid'],
+                  'name' =>$record['wallets'][$k]['walletName'],
+                  'kyc_id'=>$document['kyc_id'],
+                  'email'=>$XGCWallet['email'],
+                  'phone'=>$XGCWallet['phone'],
+                  'default_currency'=> 'XGC',
+                  'currency'=>$record['wallets'][$k]['walletCurrency']
+                  );
+            }  
+             return $this->render(array('json' => array('success'=>1,
+              'now'=>time(),
+              'result' =>'Login success',
+              'kyc_id' => $document['kyc_id'],
+              'email' => $record['email'],
+              'name' => $document['details']['Name'],
+              'phone' => $record['phone'],
+              'country_code' => $record['country_code'],
+              'address' => $document['details']['Address'],
+              'profile' => $path,
+              'setting' => $setting,
+              'walletcount' => count($record['wallets']),
+              'wallets' => $wallets,
+             )));
+
+          }else{
+             return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'Kyc id wrong!'
+            )));
+          }
+          
+      }else{
+          return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'Invalid email and mobile!'
+          )));    
       }
     }
 
@@ -2160,6 +2694,39 @@ class KycController extends \lithium\action\Controller {
 
             return true;
     }
+
+    /*
+    // This Api Only Use for App Developer Bcz Local server mail not get so Kyc id missing
+    */
+    public function getkycidDeveloperUse($key=null){
+
+      if($key==null || $key==""){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Key missing!'
+          )));
+      }else{
+         $conditions = array('key' => $key);
+         $record = Apps::find('first',array('conditions'=>$conditions));
+       
+         if(count($record)!=0){
+              $kyc = kycDocuments::find('first',array('conditions'=>array('hash' => $record['hash'])));
+              
+              return $this->render(array('json' => array('success'=>1,
+                  'now'=>time(),
+                  'result' =>'Kyc info',
+                  'kyc' => $kyc,
+                 )));
+               
+         }else{
+            return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Invalid Key!'
+            ))); 
+         }
+      } 
+    }
+
 
 } // KycController end
 ?>
