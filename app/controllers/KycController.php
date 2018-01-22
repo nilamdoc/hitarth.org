@@ -548,7 +548,7 @@ class KycController extends \lithium\action\Controller {
         $uuid = new Uuid();
         $kyc_id = $uuid->v4v();
         $email = strtolower($email);
-        $email_code = substr($kyc_id,0,4);
+        $email_code = '1111'; //substr($kyc_id,0,4);
           
         ////////////////////////////////////////Send Email
           // $emaildata = array(
@@ -608,7 +608,7 @@ class KycController extends \lithium\action\Controller {
       if(count($record)!=0){
         $ga = new GoogleAuthenticator();
         $secret = $ga->createSecret(64);
-        $signinCode = $ga->getCode($secret);  
+        $signinCode = '111111'; //$ga->getCode($secret);  
         $function = new Functions();
         $phone = $this->request->data['mobile'];
         if(substr($phone,0,1)=='+'){
@@ -2162,7 +2162,7 @@ class KycController extends \lithium\action\Controller {
               // exit();
               $uuid = new Uuid();
               $kyc_id = $uuid->v4v();
-              $email_code = substr($kyc_id,0,4);
+              $email_code = '1111'; //substr($kyc_id,0,4);
             
               ////////////////////////////////////////Send Email
                 // $emaildata = array(
@@ -2245,7 +2245,7 @@ class KycController extends \lithium\action\Controller {
          if(count($document)!=0){
               $ga = new GoogleAuthenticator();
               $secret = $ga->createSecret(64);
-              $signinCode = $ga->getCode($secret);  
+              $signinCode = '111111'; //$ga->getCode($secret);  
               $function = new Functions();
               $phone = $this->request->data['mobile'];
               if(substr($phone,0,1)=='+'){
@@ -2351,8 +2351,19 @@ class KycController extends \lithium\action\Controller {
              $data['phone'] = $ext['phone'];
              $data['country_code'] = $ext['country_code'];
              $data['hash'] = $ext['hash'];
-             $data['wallets'] = $ext['wallets'];
-             $data['secondpassword'] = $ext['secondpassword'];
+            
+             if(!empty($ext['wallets'])){
+                $data['wallets'] = $ext['wallets'];
+             }
+
+             if(!empty($ext['secondpassword'])){
+                $data['secondpassword'] = $ext['secondpassword'];
+             }
+
+             if(!empty($ext['contacts'])){
+                $data['contacts'] = $ext['contacts'];
+             }
+
              $data['sms_notification'] = empty($ext['sms_notification']) ? 0 : $ext['sms_notification'];
              $data['email_notification'] = empty($ext['email_notification']) ? 0 : $ext['email_notification'];
              $data['unit'] = empty($ext['unit']) ? 'One' : $ext['unit'];
@@ -2404,6 +2415,7 @@ class KycController extends \lithium\action\Controller {
                   'walletid' =>$record['wallets'][$k]['walletid'],
                   'name' =>$record['wallets'][$k]['walletName'],
                   'kyc_id'=>$document['kyc_id'],
+                  'greencoinAddress' => $XGCWallet['greencoinAddress'][0], 
                   'email'=>$XGCWallet['email'],
                   'phone'=>$XGCWallet['phone'],
                   'default_currency'=> 'XGC',

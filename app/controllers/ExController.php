@@ -54,7 +54,7 @@ class ExController extends \lithium\action\Controller {
 
               $uuid = new Uuid();
               $kyc_id = $uuid->v4v();
-              $email_code = substr($kyc_id,0,4);
+              $email_code = '1111'; //substr($kyc_id,0,4);
             
               ////////////////////////////////////////Send Email
                 // $emaildata = array(
@@ -104,23 +104,24 @@ class ExController extends \lithium\action\Controller {
             extract($this->request->data);
             $record = Apps::find('first',array('conditions' => array('key'=>$key,'isdelete' =>'0')));   
             if(count($record) > 0){
-                $wallet = XGCUsers::find('all', [
-                  'conditions' => array(
-                      'hash' => $record['hash'],
-                      'phone' => $mobile,
-                  )
-                ]);
+                
+                // $wallet = XGCUsers::find('all', [
+                //   'conditions' => array(
+                //       'hash' => $record['hash'],
+                //       'phone' => $mobile,
+                //   )
+                // ]);
 
-                if(count($wallet) > 0){
-                    return $this->render(array('json' => array('success'=>0,
-                      'now'=>time(),
-                      'error'=>'Wallet mobile already exits!'
-                    )));
-                }
+                // if(count($wallet) > 0){
+                //     return $this->render(array('json' => array('success'=>0,
+                //       'now'=>time(),
+                //       'error'=>'Wallet mobile already exits!'
+                //     )));
+                // }
 
                 $ga = new GoogleAuthenticator();
                 $secret = $ga->createSecret(64);
-                $signinCode = $ga->getCode($secret);  
+                $signinCode = '111111'; //$ga->getCode($secret);  
                 $function = new Functions();
                 $phone = $this->request->data['mobile'];
                 if(substr($phone,0,1)=='+'){
@@ -141,8 +142,7 @@ class ExController extends \lithium\action\Controller {
                   'now'=>time(),
                   'error'=>'Invalid Key!'
                 ))); 
-            }    
-        
+            }      
       }
 
       public function createwallet($key = null){
@@ -264,7 +264,7 @@ class ExController extends \lithium\action\Controller {
                   'or' => array(
                       array('walletid' => $walletid),
                       array('email' => $email),
-                      array('phone' => $phone)
+                      // array('phone' => $phone)
                   ),
               )
             ]);
@@ -375,6 +375,14 @@ class ExController extends \lithium\action\Controller {
               'error'=>'pub key required!'
             )));
           }
+
+          if($this->request->data['privkey'] ==null || $this->request->data['privkey']==""){
+            return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'privkey key required!'
+            )));
+          }
+
           extract($this->request->data);
 
           $record = Apps::find('first',array('conditions' => array('key'=>$key,'isdelete' =>'0')));    
@@ -382,6 +390,7 @@ class ExController extends \lithium\action\Controller {
               $XGCUsers = XGCUsers::find('first',array('conditions' => array('walletid'=>$walletid)));    
               if(count($XGCUsers) > 0){
                   $data['greencoinAddress'] = (object) array('0' => $pubkey);
+                  $data['greencoinPrivate'] = (object) array('0' => $privkey);
                   $data['DateTime'] = new \MongoDate();
                   $conditions = array('walletid' => $walletid);
                   XGCUsers::update($data,$conditions);
@@ -481,6 +490,39 @@ class ExController extends \lithium\action\Controller {
         }
       }
 
+      public function checksecondpassword($key = null){
+        
+        if($key == null || $key == ""){
+            return $this->render(array('json' => array('success' => 0,
+              'now' => time(),
+              'error' => 'Key missing!'
+            )));
+        }
+
+        $record = Apps::find('first',array(
+            'conditions' => array(
+                'key'=>$key,
+                'isdelete' => '0',
+                'secondpassword' => [
+                  '$exists' => true
+                ]
+            )
+          )
+        );
+
+        if(count($record) > 0){
+            $issecondpassword = 1;          
+        }else{
+            $issecondpassword = 0;
+        }
+
+        return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'result'=>'success',
+            'issecondpassword' => $issecondpassword
+          )));
+      }
+      
       public function changesecondrypass($key = null){
         extract($this->request->data);
         if ($key==null || $key == ""){
@@ -586,6 +628,7 @@ class ExController extends \lithium\action\Controller {
                         'walletid' => $record['wallets'][$k]['walletid'],
                         'name' => $record['wallets'][$k]['walletName'],
                         'kyc_id'=> $document['kyc_id'],
+                        'greencoinAddress' => $XGCWallet['greencoinAddress'][0], 
                         'email'=> $XGCWallet['email'],
                         'phone'=> $XGCWallet['phone'],
                         'country_code' => $XGCWallet['country_code'],

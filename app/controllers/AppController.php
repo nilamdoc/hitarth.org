@@ -11,6 +11,7 @@ use app\models\Apps;
 use app\models\KYCDocuments;
 use app\models\KYCFiles;
 
+use app\models\XGCUsers;
 use app\models\Countries;
 use app\models\Templates;
 use MongoID;	
@@ -786,8 +787,8 @@ class AppController extends \lithium\action\Controller {
              return $this->render(array('json' => array('success'=>1,
                 'now'=>time(),
                 'result'=>'Wallet update currency',
-                'walletid '=> $walletid,
-                'walletCurrency '=> $walletCurrency
+                'walletid'=> $walletid,
+                'walletCurrency'=> $walletCurrency
               )));
           }else{
                return $this->render(array('json' => array('success'=>0,
@@ -900,7 +901,7 @@ class AppController extends \lithium\action\Controller {
         )));
       }
     }
-    
+
     /* Common Function */
     private function getImage($id=null,$type=null){
       $document = KYCDocuments::find('first',array(
@@ -921,6 +922,161 @@ class AppController extends \lithium\action\Controller {
           $return_path = 'http://192.168.10.131:8888/hitarth.org/documents/'.$image_name_name;
           file_put_contents($path, $image_name->file->getBytes());
           return $return_path;
+      }
+    }
+
+    /* Friend Address List */
+
+    public function insertaddress($key = null){
+      extract($this->request->data); 
+      if ($key==null || $key == ""){
+        return $this->render(array('json' => array('success'=>0,
+        'now'=>time(),
+        'error'=>'Key missing!'
+       )));
+      }
+
+      if ($email==null || $email == ""){
+        return $this->render(array('json' => array('success'=>0,
+        'now'=>time(),
+        'error'=>'email missing!'
+       )));
+      }
+
+      if ($walletname==null || $walletname == ""){
+        return $this->render(array('json' => array('success'=>0,
+        'now'=>time(),
+        'error'=>'Wallet name missing!'
+       )));
+      }
+
+      $record = Apps::find('first',array(
+          'conditions' => array(
+              'key'=>$key,
+              'isdelete' => '0',
+          )
+        )
+      );
+       
+      if(count($record) > 0){
+
+        $XGCUsers = XGCUsers::find('first',array(
+            'conditions' => array(
+                'email'=>$email,
+            ),
+            'order' => array(
+                '_id' => 'DESC'
+            )    
+          )
+        );  
+
+        if(count($XGCUsers)){
+            if($XGCUsers['hash'] != $record['hash']){
+                
+                foreach ($record['contacts'] as $contact) {
+                  if($contact['walletid'] == $XGCUsers['walletid']){
+                      return $this->render(array('json' => array('success'=>1,
+                        'now'=>time(),
+                        'error'=>'Address already exists!'
+                      )));
+                  }
+                }  
+
+                $record = $record->to('array');
+                $contactsAry = count($record['contacts']) > 0 ? $record['contacts'] : array();
+                $newContact = array(
+                    'walletname' => $walletname,
+                    'walletid' => $XGCUsers['walletid']
+                  );
+                array_push($contactsAry,$newContact);
+
+                $data['contacts'] = $contactsAry;
+                $conditions = array('key' => $key);
+                Apps::update($data, $conditions); 
+            
+                return $this->render(array('json' => array('success'=>0,
+                  'now'=>time(),
+                  'error'=>'Add Address successfully'
+                )));
+
+            }else{
+              return $this->render(array('json' => array('success'=>1,
+                'now'=>time(),
+                'error'=>'Wallet not found!'
+              )));  
+            }
+        }else{
+          return $this->render(array('json' => array('success'=>1,
+            'now'=>time(),
+            'error'=>'Wallet not found!'
+          ))); 
+        }
+      }else{
+        return $this->render(array('json' => array('success'=>2,
+          'now'=>time(),
+          'error'=>'Invalid Key!'
+        )));     
+      }
+    }
+
+    public function addresslist($key = null){
+      extract($this->request->data); 
+      if ($key==null || $key == ""){
+        return $this->render(array('json' => array('success'=>0,
+        'now'=>time(),
+        'error'=>'Key missing!'
+       )));
+      }
+
+      $record = Apps::find('first',array(
+          'conditions' => array(
+              'key'=>$key,
+              'isdelete' => '0',
+          )
+        )
+      );
+       
+      if(count($record) > 0){
+        $cont = [];
+        $record = $record->to('array');  
+        foreach ($record['contacts'] as $k => $contact) {  
+          
+          $XGCUsers = XGCUsers::find('first',array(
+            'conditions' => array(
+                'walletid'=>$contact['walletid'],
+              )    
+            )
+          );
+
+          if(count($XGCUsers) > 0){
+
+            $friend = Apps::find('first',array(
+                'conditions' => array(
+                    'hash'=>$XGCUsers['hash'],
+                    'isdelete' => '0',
+                )
+              )
+            );
+            $path = $this->getImage($friend['hash'],'profile_img');  
+            
+            $cont[$k]['name'] = $contact['walletname'];
+            $cont[$k]['greencoinAddress'] = $XGCUsers['greencoinAddress'][0];
+            $cont[$k]['email'] = $XGCUsers['email']; 
+            $cont[$k]['phone'] = $XGCUsers['phone']; 
+            $cont[$k]['country_code'] = $XGCUsers['country_code'];
+            $cont[$k]['profile'] = $path; 
+          }
+        }  
+        return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'error'=>'success',
+          'contacts' => $cont
+        )));
+      }else{
+        return $this->render(array('json' => array('success'=>2,
+          'now'=>time(),
+          'error'=>'Invalid Key!'
+        )));     
       }
     }
 }
