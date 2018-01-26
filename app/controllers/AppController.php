@@ -1109,12 +1109,6 @@ class AppController extends \lithium\action\Controller {
           'directory'=>$directory."/".$file
         )));
      }
-
-     
-     
-     
-     
-     
     }
 }
 ?>
