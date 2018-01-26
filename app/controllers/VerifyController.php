@@ -154,8 +154,8 @@ class VerifyController extends \lithium\action\Controller {
 			)));
 		}
 		$coingreen = new Coingreen('http://'.COINGREEN_WALLET_SERVER.':'.COINGREEN_WALLET_PORT,COINGREEN_WALLET_USERNAME,COINGREEN_WALLET_PASSWORD);
-				
-	$arrayAddress = explode(",",$addresses);
+  
+  $arrayAddress = explode(",",$addresses);
 		foreach($arrayAddress as $address){
 			if($address==null || $address==""){
 				return $this->render(array('json' => array('success'=>0,
