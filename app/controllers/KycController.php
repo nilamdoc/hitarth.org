@@ -538,7 +538,7 @@ class KycController extends \lithium\action\Controller {
     }
 
     private function getKycBasic($key,$kyc){
-      $path = $this->getImage($kyc['hash'],'profile_img');
+      $path = $this->send($kyc['hash'],'profile_img');
       return $this->render(array('json' => array('success'=>1,
         'now'=>time(),
         'result' => 'Basic Information',
@@ -1884,13 +1884,14 @@ class KycController extends \lithium\action\Controller {
       // $record = kycDocuments::find('first',array('conditions'=>array('email' => $email,'phone' => $mobile,'kyc_id' => $kyc_id)));
       // if(count($record)!=0){
          $document = kycDocuments::find('first',array(
-                  'conditions'=>array('email' => $email,'phone' => $mobile,'kyc_id' => $kyc_id)));
+                  'conditions'=>array('email' => $email,'details.Mobile' => $country_code.$mobile,'kyc_id' => $kyc_id)));
          if(count($document)!=0){
               $ga = new GoogleAuthenticator();
               $secret = $ga->createSecret(64);
               $signinCode = $ga->getCode($secret);  
               $function = new Functions();
-              $phone = $this->request->data['mobile'];
+              $phone = $country_code.$mobile;
+             
               if(substr($phone,0,1)=='+'){
                 $phone = str_replace("+","",$phone);
               }
@@ -2251,7 +2252,7 @@ class KycController extends \lithium\action\Controller {
           if ( $height <= 0 && $width <= 0 ) return false;
           if ( $file === null && $string === null ) return false;
               # Setting defaults and meta
-          $info   = $file !== null ? getimagesize($file) : getimagesizefromstring($string);
+          $info   = $file !== null ? getimagesize($file) : sendsizefromstring($string);
           $image  = '';
           $final_width = 0;
           $final_height = 0;
