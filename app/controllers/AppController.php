@@ -1178,5 +1178,36 @@ class AppController extends \lithium\action\Controller {
     }
 
 
+    public function uploadProfileThumb($walletID){
+     $directory = substr($walletID,0,1)."/".substr($walletID,1,1)."/".substr($walletID,2,1)."/".substr($walletID,3,1);
+     $file = $walletID .".jpg";
+     
+     $ftp_host = FTP_HOST; /* host */
+     $ftp_user_name = FTP_USER; /* username */
+     $ftp_user_pass = FTP_PASS; /* password */
+
+     $local_file = LITHIUM_APP_PATH.   "/webroot". FTP_LOCAL_PATH. $file;     
+     $remote_file = "/profiles/" . $directory ."/".$file; 
+     
+     $connect_it = ftp_connect( $ftp_host );
+// print_r($local_file);
+// print_r($remote_file);
+ 
+/* Login to FTP */
+     $login_result = ftp_login( $connect_it, $ftp_user_name, $ftp_user_pass );
+ 
+/* Send $local_file to FTP */
+     if ( ftp_put( $connect_it, $remote_file, $local_file, FTP_BINARY ) ) {
+      return $this->render(array('json' => array('success'=>1,
+          'now'=>time(),
+          'directory'=>$directory."/".$file
+        )));
+     } else {
+      return $this->render(array('json' => array('success'=>0,
+          'now'=>time(),
+          'directory'=>$directory."/".$file
+        )));
+     }
+    }
 }
 ?>

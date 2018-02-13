@@ -54,6 +54,7 @@ use app\extensions\action\OP_Return;
 use lithium\util\Validator;
 use app\extensions\action\Functions;
 use app\extensions\action\Coingreen;
+use app\models\Apps;
 
 class XgcController extends \lithium\action\Controller {
 	public function index(){
@@ -156,6 +157,96 @@ class XgcController extends \lithium\action\Controller {
   
 		)));
 	}
+
+  public function transactionhistoryTEST($key = null){
+      extract($this->request->data); 
+      
+      if($key==null || $key == ""){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Key missing!'
+        )));
+      }
+
+      if($walletid==null || $walletid == ""){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Wallet id missing!'
+        )));
+      }
+
+      if($limit==null || $limit == ""){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Limit missing!'
+        )));
+      }
+
+      if($offset==null || $offset == ""){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Offset missing!'
+        )));
+      }
+
+      $record = Apps::find('first',array(
+            'conditions' => array(
+                  'key'=>$key,
+                  'isdelete' => '0'
+              )
+          )
+        );
+
+      if(count($record) > 0){
+        $chkwallet = XGCUsers::find('first',array('conditions' => array('hash'=>$record['hash'],'walletid'=>$walletid)));
+        if(count($chkwallet) > 0){
+          $COINGREEN = new COINGREEN('http://'.COINGREEN_WALLET_SERVER.':'.COINGREEN_WALLET_PORT,COINGREEN_WALLET_USERNAME,COINGREEN_WALLET_PASSWORD);
+          // $walletid = "Default"; 
+          $traslist = $COINGREEN->listtransactions($walletid,(int)$limit,(int)$offset);
+
+          if(!empty($traslist['error']))
+          {
+            return $this->render(array('json' => array('success'=>0,
+                  'now'=>time(),
+                  'error'=>$traslist['error']
+              )));
+          }
+
+          $globalArray = [];
+          foreach ($traslist as $kl => $lists) {
+            $innerArray = [];
+
+            $xgc = XGCUsers::find('first',array('conditions' => array('greencoinAddress.0'=>$lists['address']))); 
+
+            foreach ($lists as $kt => $list) {
+              $innerArray[$kt] = $list;
+            }
+            $innerArray['greencoinwallet'] = $xgc['walletid'];
+            $globalArray[$kl] =  $innerArray;
+              
+          }
+
+          return $this->render(array('json' => array('success'=>1,
+                'now'=>time(),
+                'result'=>'success transaction list',
+                'prfilehost' =>FTP_HOST."/profiles/",
+                'transaction' => array_reverse($globalArray)
+            )));
+          }else{
+          return $this->render(array('json' => array('success'=>0,
+                'now'=>time(),
+                'error'=>'Enter your valid wallet'
+            )));
+        }   
+
+      }else{
+        return $this->render(array('json' => array('success'=>2,
+              'now'=>time(),
+              'error'=>'Invalid Key!'
+          )));
+      }
+    }
+
 	
 }
 ?>

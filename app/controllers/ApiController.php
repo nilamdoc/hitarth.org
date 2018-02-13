@@ -3,11 +3,13 @@ namespace app\controllers;
 use app\models\Blocks;
 use app\models\Txs;
 use app\models\Apps;
+use app\models\Orders;
 use app\models\XGCUsers;
 use app\models\KYCDocuments;
 use app\models\KYCFiles;
 use app\models\XGCDetails;
 use app\extensions\action\Coingreen;
+use app\models\Wallets;
 
 class ApiController extends \lithium\action\Controller {
 
@@ -39,7 +41,7 @@ class ApiController extends \lithium\action\Controller {
  //          	)));
  //    }	
 
-    public function sendcoin($key = null){
+    public function sendcoin_BKP($key = null){
     	extract($this->request->data); 
 	    
 	    if($key==null || $key == ""){
@@ -148,7 +150,7 @@ class ApiController extends \lithium\action\Controller {
   		}
     }
 
-    public function sendcoinXXX($key = null){
+    public function sendcoin($key = null){
     	extract($this->request->data); 
 	    
 	    if($key==null || $key == ""){
@@ -202,7 +204,7 @@ class ApiController extends \lithium\action\Controller {
 		  			$COINGREEN = new COINGREEN('http://'.COINGREEN_WALLET_SERVER.':'.COINGREEN_WALLET_PORT,COINGREEN_WALLET_USERNAME,COINGREEN_WALLET_PASSWORD);	
 				    
 		  			//check Balance in Wallet
-				   $unspent = $COINGREEN->listunspent(0,999,[$chkwallet->greencoinAddress[0]]);
+				   $unspent = $COINGREEN->listunspent(0,9999999,[$chkwallet->greencoinAddress[0]]);
 				    
 				    if(!empty($unspent['error'])){
 				    	return $this->render(array('json' => array('success'=>0,
@@ -210,7 +212,9 @@ class ApiController extends \lithium\action\Controller {
 			          		'error'=>"something went wrong!"
 			        	)));
 				    }
-				    
+				    // echo "<pre>";
+				    // print_r($unspent);
+				    // exit();
 		  			$balance = array_sum(array_column($unspent, 'amount'));
 				    if($balance >= $amount){
 						// send coin
@@ -392,8 +396,187 @@ class ApiController extends \lithium\action\Controller {
   		}
     }
 
-   //  public function walletbackup($key = null){
-   //  	extract($this->request->data); 
+    public function paymentsuccess($key = null){
+    	extract($this->request->data); 
+	    
+	    if($key==null || $key == ""){
+	        return $this->render(array('json' => array('success'=>0,
+	        	'now'=>time(),
+	        	'error'=>'Key missing!'
+	    	)));
+	    }
+
+	    if($walletid==null || $walletid == ""){
+	        return $this->render(array('json' => array('success'=>0,
+	        	'now'=>time(),
+	        	'error'=>'Wallet id missing!'
+	    	)));
+	    }
+
+	    if($paymentid==null || $paymentid == ""){
+	        return $this->render(array('json' => array('success'=>0,
+	        	'now'=>time(),
+	        	'error'=>'Paymentid id missing!'
+	    	)));
+	    }
+
+	    if($payament==null || $payament == ""){
+	        return $this->render(array('json' => array('success'=>0,
+	        	'now'=>time(),
+	        	'error'=>'Payament missing!'
+	    	)));
+	    }
+
+	    if($ip==null || $ip == ""){
+	        return $this->render(array('json' => array('success'=>0,
+	        	'now'=>time(),
+	        	'error'=>'ip missing!'
+	    	)));
+	    }
+
+	    $record = Apps::find('first',array(
+          	'conditions' => array(
+              		'key'=>$key,
+              		'isdelete' => '0'
+          		)
+        	)
+      	);
+
+  		if(count($record) > 0){
+  			$chkwallet = XGCUsers::find('first',array('conditions' => array('hash'=>$record['hash'],'walletid'=>$walletid)));
+  			if(count($chkwallet) > 0){
+	  			
+	  			$data = array(
+			        'walletid'=>$walletid,
+			        'paymentid'=>$paymentid,
+			        'payament' => $payament,
+			        'hash' => $record['hash'],
+			        'IP' => $ip,
+			    	'Server'=>md5($_SERVER["SERVER_ADDR"]),
+			    	'Refer'=>md5($_SERVER["REMOTE_ADDR"]),
+			    	'DateTime' => new \MongoDate(),
+			     );
+			     Orders::create()->save($data);
+
+			     ////////////////////////////////////////Send Email
+		          // $payment = array(
+		          //  'walletid'=>$walletid,
+		          //  'paymentid'=>$paymentid
+		          // );
+		          // $function = new Functions();
+            //       $compact = array('data'=>$payment);
+            //       $from = array(NOREPLY => "noreply@".COMPANY_URL);
+            //       $email = 'nilamsir@gmail.com';
+            //       $function->sendEmailTo($email,$compact,'process','purchseCoin',"Purchase Coin Request Coin Transfer Wallet",$from,'','','',null);
+		        //////////////////////////////////////////////////////////////////////
+
+
+	  			return $this->render(array('json' => array('success'=>1,
+	          		'now'=>time(),
+	          		'result'=>'order history suceess',
+	        	)));
+	        }else{
+		    	return $this->render(array('json' => array('success'=>0,
+	          		'now'=>time(),
+	          		'error'=>'Enter your valid wallet'
+	        	)));
+		    } 	
+
+  		}else{
+  			return $this->render(array('json' => array('success'=>2,
+          		'now'=>time(),
+          		'error'=>'Invalid Key!'
+        	)));
+  		}
+    }
+
+    public function walletbackup($key = null){
+        extract($this->request->data);
+        if($key==null || $key==""){
+          return $this->render(array('json' => array('success'=>0,
+            'now'=>time(),
+            'error'=>'Key missing!'
+          )));
+        }
+
+        if($kyc_id==null || $kyc_id == ""){
+	        return $this->render(array('json' => array('success'=>0,
+	        'now'=>time(),
+	        'error'=>'Something went wrong!'
+	        )));
+	      }
+        
+        $conditions = array('key' => $key,'isdelete' =>'0');
+        $record = Apps::find('first',array('conditions'=>$conditions));
+        if(count($record)!=0){
+        	$document = KYCDocuments::find('first',array(
+	            'conditions' => array(
+	              'hash'=>$record['hash'],
+	              'kyc_id'=>$kyc_id
+	              )
+	            )
+	        );
+        
+            if(count($document) > 0){
+	            $walletXGC = XGCUsers::find('all', [
+	                'conditions' => array(
+	                    'hash' => $record['hash'],
+	                    'greencoinAddress'=>array('$ne'=>null)
+	                )
+	            ]);         
+              
+                $wallets = [];
+                foreach ($walletXGC as $k => $wallet) { 
+                  
+                    $walletXGC = wallets::find('first', [
+                      'conditions' => array(
+                        'key' => $wallet['code'],
+                        'oneCodeused' => 'Yes',
+                        'twoCodeused' => 'Yes',
+                        'secret'=>array('$ne'=>null)
+                      )
+                    ]);
+
+                    if(count($walletXGC) == 0){
+                        continue;
+                    }    
+
+                    $wallets[] = array(
+                      'record'=>0,
+		              'recordid'=> (string) $wallet['_id'],
+		              'walletid'=>$wallet['walletid'],
+		              'xwalletid'=>$wallet['xwalletid'],
+		              'secondpassword' => $record['secondpassword'],
+		              'email'=>$wallet['email'],
+		              'xemail'=>$wallet['xemail'],
+		              'phone'=>$wallet['phone'],
+		              'xphone'=>$wallet['xphone'],
+		              'code'=>$wallet['code'],
+		              'xcode'=>$wallet['xcode'],
+                    );
+                }  
+	               	return $this->render(array('json' => array('success'=>1,
+	                	'now'=>time(),
+	                	'result' =>'Wallet list',
+	                	'wallets' => $wallets
+					)));
+            }else{
+		        return $this->render(array('json' => array('success'=>0,
+	                'now'=>time(),
+	                'error'=>'Something went wrong!',
+	            )));
+	        }        
+        }else{
+            return $this->render(array('json' => array('success'=>2,
+            'now'=>time(),
+            'error'=>'Invalid Key!'
+            )));    
+        }   
+     }
+
+
+   //  public function walletbackup_dump($key = null){
+   		//  	extract($this->request->data); 
 	    
 	  //   if($key==null || $key == ""){
 	  //       return $this->render(array('json' => array('success'=>0,
@@ -403,31 +586,31 @@ class ApiController extends \lithium\action\Controller {
 	  //   }
 
 	  //   $record = Apps::find('first',array(
-   //        	'conditions' => array(
-   //            		'key'=>$key,
-   //            		'isdelete' => '0'
-   //        		)
-   //      	)
-   //    	);
-   
-  	// 	if(count($record) > 0){
-  	// 		$wallets = XGCUsers::find('first',array('conditions' => array('hash'=>$record['hash'])));
-	    	
-  	// 		$COINGREEN = new COINGREEN('http://'.COINGREEN_WALLET_SERVER.':'.COINGREEN_WALLET_PORT,COINGREEN_WALLET_USERNAME,COINGREEN_WALLET_PASSWORD);
-  
-			// $dump = $COINGREEN->dumpwallet(LITHIUM_APP_PATH.'/webroot/documents/w20180205.txt');
+	   //        	'conditions' => array(
+	   //            		'key'=>$key,
+	   //            		'isdelete' => '0'
+	   //        		)
+	   //      	)
+	   //    	);
+	   
+	  	// 	if(count($record) > 0){
+	  	// 		$wallets = XGCUsers::find('first',array('conditions' => array('hash'=>$record['hash'])));
+		    	
+	  	// 		$COINGREEN = new COINGREEN('http://'.COINGREEN_WALLET_SERVER.':'.COINGREEN_WALLET_PORT,COINGREEN_WALLET_USERNAME,COINGREEN_WALLET_PASSWORD);
+	  
+				// $dump = $COINGREEN->dumpwallet(LITHIUM_APP_PATH.'/webroot/documents/w20180205.txt');
 
 
-	  //   	return $this->render(array('json' => array('success'=>1,
-   //        		'now'=>time(),
-   //        		'result'=>'suceess'
-   //      	)));  	
-  	// 	}else{
-  	// 		return $this->render(array('json' => array('success'=>2,
-   //        		'now'=>time(),
-   //        		'error'=>'Invalid Key!'
-   //      	)));
-  	// 	}
+		  //   	return $this->render(array('json' => array('success'=>1,
+	   //        		'now'=>time(),
+	   //        		'result'=>'suceess'
+	   //      	)));  	
+	  	// 	}else{
+	  	// 		return $this->render(array('json' => array('success'=>2,
+	   //        		'now'=>time(),
+	   //        		'error'=>'Invalid Key!'
+	   //      	)));
+	  	// 	}
    //  }
 }
 
