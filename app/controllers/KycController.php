@@ -192,18 +192,18 @@ class KycController extends \lithium\action\Controller {
         $uuid = new Uuid();
         $kyc_id = $uuid->v4v();
         $email = strtolower($email);
-        $email_code = '1111'; //substr($kyc_id,0,4);
+        $email_code = substr($kyc_id,0,4);
           
         ////////////////////////////////////////Send Email
-          // $emaildata = array(
-          //  'kyc_id'=>$email_code,
-          //  'email'=>$email
-          // );
-          // $function = new Functions();
-          // $compact = array('data'=>$emaildata);
-          // $from = array(NOREPLY => "noreply@".COMPANY_URL);
-          // $email = $email;
-          // $function->sendEmailTo($email,$compact,'process','sendKYC',"KYCGlobal - Email Code",$from,'','','',null);
+          $emaildata = array(
+           'kyc_id'=>$email_code,
+           'email'=>$email
+          );
+          $function = new Functions();
+          $compact = array('data'=>$emaildata);
+          $from = array(NOREPLY => "noreply@".COMPANY_URL);
+          $email = $email;
+          $function->sendEmailTo($email,$compact,'process','sendKYC',"KYCGlobal - Email Code",$from,'','','',null);
         //////////////////////////////////////////////////////////////////////
           
           $filed = ['chkemail'=>$email,'email_code'=>$email_code];
@@ -252,7 +252,7 @@ class KycController extends \lithium\action\Controller {
       if(count($record)!=0){
         $ga = new GoogleAuthenticator();
         $secret = $ga->createSecret(64);
-        $signinCode = '111111'; //$ga->getCode($secret);  
+        $signinCode = $ga->getCode($secret);  
         $function = new Functions();
         $phone = $this->request->data['mobile'];
         if(substr($phone,0,1)=='+'){
@@ -1586,15 +1586,15 @@ class KycController extends \lithium\action\Controller {
 
 
                   ////////////////////////////////////////Send Email
-                  // $emaildata = array(
-                  //  'kyc_id'=>$kyc['kyc_id'],
-                  //  'email'=>$record['email']
-                  // );
-                  // $function = new Functions();
-                  // $compact = array('data'=>$emaildata);
-                  // $from = array(NOREPLY => "noreply@".COMPANY_URL);
-                  // $email = 'nilamsir@gmail.com';
-                  // $function->sendEmailTo($email,$compact,'process','submitKYC',"KYC - New From Submit",$from,'','','',null);
+                  $emaildata = array(
+                   'kyc_id'=>$kyc['kyc_id'],
+                   'email'=>$record['email']
+                  );
+                  $function = new Functions();
+                  $compact = array('data'=>$emaildata);
+                  $from = array(NOREPLY => "noreply@".COMPANY_URL);
+                  $email = 'nilamsir@gmail.com';
+                  $function->sendEmailTo($email,$compact,'process','submitKYC',"KYC - New From Submit",$from,'','','',null);
 
                   /////////////////////////////////////////
                   $data = [];
@@ -1804,18 +1804,18 @@ class KycController extends \lithium\action\Controller {
               // exit();
               $uuid = new Uuid();
               $kyc_id = $uuid->v4v();
-              $email_code = '1111'; //substr($kyc_id,0,4);
+              $email_code = substr($kyc_id,0,4);
             
               ////////////////////////////////////////Send Email
-                // $emaildata = array(
-                //  'kyc_id'=>$email_code,
-                //  'email'=>$this->request->data['email']
-                // );
-                // $function = new Functions();
-                // $compact = array('data'=>$emaildata);
-                // $from = array(NOREPLY => "noreply@".COMPANY_URL);
-                // $email = $this->request->data['email'];
-                // $function->sendEmailTo($email,$compact,'process','KycLoginEmailVerify',"Login Kyc - Email Code",$from,'','','',null);
+                $emaildata = array(
+                 'kyc_id'=>$email_code,
+                 'email'=>$this->request->data['email']
+                );
+                $function = new Functions();
+                $compact = array('data'=>$emaildata);
+                $from = array(NOREPLY => "noreply@".COMPANY_URL);
+                $email = $this->request->data['email'];
+                $function->sendEmailTo($email,$compact,'process','KycLoginEmailVerify',"Login Kyc - Email Code",$from,'','','',null);
               //////////////////////////////////////////////////////////////////////
              
               $filed = ['chkemail' => $email,'email_code'=>$email_code];
@@ -1888,7 +1888,7 @@ class KycController extends \lithium\action\Controller {
          if(count($document)!=0){
               $ga = new GoogleAuthenticator();
               $secret = $ga->createSecret(64);
-              $signinCode = '111111'; //$ga->getCode($secret);  
+              $signinCode = $ga->getCode($secret);  
               $function = new Functions();
               $phone = $this->request->data['mobile'];
               if(substr($phone,0,1)=='+'){

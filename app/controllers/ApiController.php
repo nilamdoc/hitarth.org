@@ -459,15 +459,15 @@ class ApiController extends \lithium\action\Controller {
 			     Orders::create()->save($data);
 
 			     ////////////////////////////////////////Send Email
-		          // $payment = array(
-		          //  'walletid'=>$walletid,
-		          //  'paymentid'=>$paymentid
-		          // );
-		          // $function = new Functions();
-            //       $compact = array('data'=>$payment);
-            //       $from = array(NOREPLY => "noreply@".COMPANY_URL);
-            //       $email = 'nilamsir@gmail.com';
-            //       $function->sendEmailTo($email,$compact,'process','purchseCoin',"Purchase Coin Request Coin Transfer Wallet",$from,'','','',null);
+		          $payment = array(
+		           'walletid'=>$walletid,
+		           'paymentid'=>$paymentid
+		          );
+		          $function = new Functions();
+                  $compact = array('data'=>$payment);
+                  $from = array(NOREPLY => "noreply@".COMPANY_URL);
+                  $email = 'nilamsir@gmail.com';
+                  $function->sendEmailTo($email,$compact,'process','purchseCoin',"Purchase Coin Request Coin Transfer Wallet",$from,'','','',null);
 		        //////////////////////////////////////////////////////////////////////
 
 

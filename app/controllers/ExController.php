@@ -207,7 +207,7 @@ class ExController extends \lithium\action\Controller {
 
                $ga = new GoogleAuthenticator(); 
               if($wallet['oneCodeused']=='Yes' || $wallet['oneCodeused']==""){
-                $oneCode = '1111'; //$ga->getCode($ga->createSecret(64)); 
+                $oneCode = $ga->getCode($ga->createSecret(64)); 
               }else{
                 $oneCode = $wallet['oneCode'];
               }
@@ -224,17 +224,17 @@ class ExController extends \lithium\action\Controller {
 
               $uuid = new Uuid();
               $kyc_id = $uuid->v4v();
-              $email_code = '1111'; //substr($kyc_id,0,4);
+              $email_code = substr($kyc_id,0,4);
             
               /////////////////////////////////Email//////////////////////////////////////////////////
               
-              // $function = new Functions();
-              // $compact = array('data'=>$data);
-              // // sendEmailTo($email,$compact,$controller,$template,$subject,$from,$mail1,$mail2,$mail3)
-              // $from = array(NOREPLY => "noreply@".COMPANY_URL);
-              // $email = $email;
-              // $attach = null;
-              // $function->sendEmailTo($email,$compact,'code','code',"Validation code ",$from,'','','',$attach);
+              $function = new Functions();
+              $compact = array('data'=>$data);
+              // sendEmailTo($email,$compact,$controller,$template,$subject,$from,$mail1,$mail2,$mail3)
+              $from = array(NOREPLY => "noreply@".COMPANY_URL);
+              $email = $email;
+              $attach = null;
+              $function->sendEmailTo($email,$compact,'code','code',"Validation code ",$from,'','','',$attach);
             
             /////////////////////////////////Email//////////////////////////////////////////////////
                    
@@ -384,7 +384,7 @@ class ExController extends \lithium\action\Controller {
 
                 $ga = new GoogleAuthenticator();
                 if($wallet['twoCodeused']=='Yes' || $wallet['twoCodeused']==""){
-                  $twoCode = '111111'; //$ga->getCode($ga->createSecret(64)); 
+                  $twoCode = $ga->getCode($ga->createSecret(64)); 
                 }else{
                   $twoCode = $wallet['twoCode'];
                 }
@@ -776,10 +776,10 @@ class ExController extends \lithium\action\Controller {
 
                   // sending email to the users 
                     /////////////////////////////////Email//////////////////////////////////////////////////
-                      // $function = new Functions();
-                      // $compact = array('data'=>$printdata);
-                      // $from = array(NOREPLY => "noreply@".COMPANY_URL);
-                      // $function->sendEmailTo($email,$compact,'ex','setupwd',"XGCWallet - important document",$from,'','','',null);
+                      $function = new Functions();
+                      $compact = array('data'=>$printdata);
+                      $from = array(NOREPLY => "noreply@".COMPANY_URL);
+                      $function->sendEmailTo($email,$compact,'ex','setupwd',"XGCWallet - important document",$from,'','','',null);
                     /////////////////////////////////Email//////////////////////////////////////////////////
 
 
