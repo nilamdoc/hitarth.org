@@ -2047,9 +2047,7 @@ class KycController extends \lithium\action\Controller {
                   if(count($walletXGC) == 0){
                         continue;
                   }
-
-
-
+                  
                   $COINGREEN = new COINGREEN('http://'.COINGREEN_WALLET_SERVER.':'.COINGREEN_WALLET_PORT,COINGREEN_WALLET_USERNAME,COINGREEN_WALLET_PASSWORD);  
                   $balance = $COINGREEN->getbalance($wallet['walletid']);
 

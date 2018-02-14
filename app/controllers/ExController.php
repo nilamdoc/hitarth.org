@@ -678,7 +678,7 @@ class ExController extends \lithium\action\Controller {
       }
 
       public function setgreencoinaddress($key = null){
-       ini_set('max_execution_time', 0);
+          ini_set('max_execution_time', 0);
           extract($this->request->data);
           if($key==null || $key==""){
             return $this->render(array('json' => array('success'=>0,
@@ -773,57 +773,57 @@ class ExController extends \lithium\action\Controller {
 
               $createWallet = $COINGREEN->importprivkey($privkey,$walletid,false);
 
-              $filename = "Wallet_".gmdate('Y-m-d_H-i-s',time()).".txt";
-              $dumpwallet = $COINGREEN->dumpwallet($filename);
+             //  $filename = "Wallet_".gmdate('Y-m-d_H-i-s',time()).".txt";
+             // // $dumpwallet = $COINGREEN->dumpwallet($filename);
               
-                  $printdata = array(
-                    'email' => $email,
-                    'phone' => $phone,
-                    'walletid' => $walletid,
-                    'passphrase' => $passphrase,
-                    'code' => $codekey,
-                    'privkey' => $privkey,
-                    'greencoinAddress' => $pubkey,
-                    'ip' => $ip,
-                    'DateTime' => new \MongoDate(),
-                  );
+             //      $printdata = array(
+             //        'email' => $email,
+             //        'phone' => $phone,
+             //        'walletid' => $walletid,
+             //        'passphrase' => $passphrase,
+             //        'code' => $codekey,
+             //        'privkey' => $privkey,
+             //        'greencoinAddress' => $pubkey,
+             //        'ip' => $ip,
+             //        'DateTime' => new \MongoDate(),
+             //      );
 
-                      //create all QR Codes
-              $qrcode = new QRcode();   
-              $qrcode->png($passphrase, QR_OUTPUT_DIR."XGCWallet-".$walletid."-passphrase.png", 'H', 7, 2);   
-              $qrcode->png($walletid, QR_OUTPUT_DIR."XGCWallet-".$walletid."-walletid.png", 'H', 7, 2);   
-              $qrcode->png($codekey, QR_OUTPUT_DIR."XGCWallet-".$walletid."-code.png", 'H', 7, 2);   
-              $qrcode->png($privkey, QR_OUTPUT_DIR."XGCWallet-".$walletid."-privkey.png", 'H', 7, 2);   
-              $qrcode->png($pubkey, QR_OUTPUT_DIR."XGCWallet-".$walletid."-greencoinAddress.png", 'H', 7, 2);   
+             //          //create all QR Codes
+             //  $qrcode = new QRcode();   
+             //  $qrcode->png($passphrase, QR_OUTPUT_DIR."XGCWallet-".$walletid."-passphrase.png", 'H', 7, 2);   
+             //  $qrcode->png($walletid, QR_OUTPUT_DIR."XGCWallet-".$walletid."-walletid.png", 'H', 7, 2);   
+             //  $qrcode->png($codekey, QR_OUTPUT_DIR."XGCWallet-".$walletid."-code.png", 'H', 7, 2);   
+             //  $qrcode->png($privkey, QR_OUTPUT_DIR."XGCWallet-".$walletid."-privkey.png", 'H', 7, 2);   
+             //  $qrcode->png($pubkey, QR_OUTPUT_DIR."XGCWallet-".$walletid."-greencoinAddress.png", 'H', 7, 2);   
                     
-                    // send email for password and QRCode print --------- start
+             //        // send email for password and QRCode print --------- start
               
                     
-              $view  = new View(array(
-                'paths' => array(
-                  'template' => '{:library}/views/{:controller}/{:template}.{:type}.php',
-                  'layout'   => '{:library}/views/layouts/{:layout}.{:type}.php',
-                )
-              ));
-              $page =  $view->render(
-                'all',
-                compact('printdata'),
-                array(
-                  'controller' => 'print',
-                  'template'=>'walletsetup',
-                  'type' => 'pdf',
-                  'layout' =>'print'
-                )
-              );  
+             //  $view  = new View(array(
+             //    'paths' => array(
+             //      'template' => '{:library}/views/{:controller}/{:template}.{:type}.php',
+             //      'layout'   => '{:library}/views/layouts/{:layout}.{:type}.php',
+             //    )
+             //  ));
+             //  $page =  $view->render(
+             //    'all',
+             //    compact('printdata'),
+             //    array(
+             //      'controller' => 'print',
+             //      'template'=>'walletsetup',
+             //      'type' => 'pdf',
+             //      'layout' =>'print'
+             //    )
+             //  );  
               
-                  // sending email to the users 
-                /////////////////////////////////Email//////////////////////////////////////////////////
-                $function = new Functions();
-                $compact = array('data'=>$printdata);
-                $from = array(NOREPLY => "noreply@".COMPANY_URL);
-                $function->sendEmailTo($email,$compact,'ex','setupwd',"XGCWallet - important document",$from,'','','',null);
-                $attach = QR_OUTPUT_DIR.'XGCWallet-'.$printdata['walletid']."-Wallet".".pdf";
-                $function->sendEmailTo($email,$compact,'ex','setup',"XGCWallet - important document",$from,'','','',$attach);
+             //      // sending email to the users 
+             //    /////////////////////////////////Email//////////////////////////////////////////////////
+             //    $function = new Functions();
+             //    $compact = array('data'=>$printdata);
+             //    $from = array(NOREPLY => "noreply@".COMPANY_URL);
+             //    $function->sendEmailTo($email,$compact,'ex','setupwd',"XGCWallet - important document",$from,'','','',null);
+             //    $attach = QR_OUTPUT_DIR.'XGCWallet-'.$printdata['walletid']."-Wallet".".pdf";
+             //    $function->sendEmailTo($email,$compact,'ex','setup',"XGCWallet - important document",$from,'','','',$attach);
 
                   /////////////////////////////////Email//////////////////////////////////////////////////
 
