@@ -678,6 +678,7 @@ class ExController extends \lithium\action\Controller {
       }
 
       public function setgreencoinaddress($key = null){
+       ini_set('max_execution_time', 0);
           extract($this->request->data);
           if($key==null || $key==""){
             return $this->render(array('json' => array('success'=>0,
@@ -843,6 +844,8 @@ class ExController extends \lithium\action\Controller {
                     'now'=>time(),
                     'result'=>'Greencoin address set success',
                     'walletid'=>$walletid,
+                    'Server'=>$_SERVER["SERVER_ADDR"],
+                    'Refer'=>$_SERVER["REMOTE_ADDR"]
                   )));
 
             }else{
