@@ -594,10 +594,10 @@ class ExController extends \lithium\action\Controller {
             ]);
 
             if(count($walletXGC)!=0){
-                return $this->render(array('json' => array('success'=>0,
-                  'now'=>time(),
-                  'error'=>'Wallet Already exits!'
-                )));
+                // return $this->render(array('json' => array('success'=>0,
+                //   'now'=>time(),
+                //   'error'=>'Wallet Already exits!'
+                // )));
             }
 
             $record = $record->to('array');
@@ -903,9 +903,10 @@ class ExController extends \lithium\action\Controller {
               $validateAddress = $coingreen->validateaddress($pubkey);
 
               if($validateAddress['isvalid']==0 || $validateAddress==null || $validateAddress==''){
+                exec("service greencoind start");
                 return $this->render(array('json' => array('success'=>0,
                   'now'=>time(),
-                  'error'=>'Greencoinxaddress incorrect!'
+                  'error'=>'Greencoinx address incorrect try after sometime!'
                 )));
               }
                 
