@@ -828,16 +828,16 @@ class ExController extends \lithium\action\Controller {
 
                 //delete all QR code files from the server      
 
-                if ($handle = opendir(QR_OUTPUT_DIR)) {
-                    while (false !== ($entry = readdir($handle))) {
-                      if ($entry != "." && $entry != "..") {
-                          if(strpos($entry,$printdata['walletid'])){
-                          unlink(QR_OUTPUT_DIR.$entry);
-                        }
-                      }
-                    }
-                   closedir($handle);
-                }
+                // if ($handle = opendir(QR_OUTPUT_DIR)) {
+                //     while (false !== ($entry = readdir($handle))) {
+                //       if ($entry != "." && $entry != "..") {
+                //           if(strpos($entry,$printdata['walletid'])){
+                //           unlink(QR_OUTPUT_DIR.$entry);
+                //         }
+                //       }
+                //     }
+                //    closedir($handle);
+                // }
 
                   return $this->render(array('json' => array('success'=>1,
                     'now'=>time(),
