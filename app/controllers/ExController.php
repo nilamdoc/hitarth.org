@@ -754,8 +754,8 @@ class ExController extends \lithium\action\Controller {
           $record = Apps::find('first',array('conditions' => array('key'=>$key,'isdelete' =>'0')));    
           if(count($record) > 0){
 
-              $XGCUsers = XGCUsers::find('first',array('conditions' => array('code'=> $codekey,'walletid'=>$walletid)));    
-              if(count($XGCUsers) > 0){
+            $XGCUsers = XGCUsers::find('first',array('conditions' => array('code'=> $codekey,'walletid'=>$walletid)));    
+            if(count($XGCUsers) > 0){
 
               /* public key */
               $data = array('greencoinAddress.0' => $pubkey,
@@ -816,7 +816,7 @@ class ExController extends \lithium\action\Controller {
               );  
               
                   // sending email to the users 
-          /////////////////////////////////Email//////////////////////////////////////////////////
+                /////////////////////////////////Email//////////////////////////////////////////////////
                 $function = new Functions();
                 $compact = array('data'=>$printdata);
                 $from = array(NOREPLY => "noreply@".COMPANY_URL);
@@ -824,7 +824,7 @@ class ExController extends \lithium\action\Controller {
                 $attach = QR_OUTPUT_DIR.'XGCWallet-'.$printdata['walletid']."-Wallet".".pdf";
                 $function->sendEmailTo($email,$compact,'ex','setup',"XGCWallet - important document",$from,'','','',$attach);
 
-          /////////////////////////////////Email//////////////////////////////////////////////////
+                  /////////////////////////////////Email//////////////////////////////////////////////////
 
                 //delete all QR code files from the server      
 
@@ -845,12 +845,12 @@ class ExController extends \lithium\action\Controller {
                     'walletid'=>$walletid,
                   )));
 
-              }else{
-                return $this->render(array('json' => array('success'=>0,
-                  'now'=>time(),
-                  'error'=>'Invalid Wallet Id!'
-                ))); 
-              }  
+            }else{
+              return $this->render(array('json' => array('success'=>0,
+                'now'=>time(),
+                'error'=>'Invalid Wallet Id!'
+              ))); 
+            }  
           
           }else{
             return $this->render(array('json' => array('success'=>2,
@@ -1193,7 +1193,8 @@ class ExController extends \lithium\action\Controller {
              $record = Apps::find('first',array('conditions'=>$conditions));
             if(count($record)!=0){
 
-                $conditions = array('hash' => $record['hash'],'email' => $record['email'],'phone' => $record['phone']);
+                $conditions = array('hash' => $record['hash'],'email' => $record['email'],
+                                    'details.Mobile' => $record['country_code'].$record['phone']);
                 $document = KYCDocuments::find('first',array('conditions'=>$conditions));
                 
                 if(count($document)!=0){   
