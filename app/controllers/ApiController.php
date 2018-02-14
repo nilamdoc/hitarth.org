@@ -18,28 +18,12 @@ class ApiController extends \lithium\action\Controller {
   
 		$getblockcount = $COINGREEN->getblockcount();
 
-	  $getconnectioncount = $COINGREEN->getconnectioncount();
-	  $getblockhash = $COINGREEN->getblockhash($getblockcount);
-	  $getblock = $COINGREEN->getblock($getblockhash);
+	  	$getconnectioncount = $COINGREEN->getconnectioncount();
+	  	$getblockhash = $COINGREEN->getblockhash($getblockcount);
+	  	$getblock = $COINGREEN->getblock($getblockhash);
  		$title = "Network connectivity ";		
-	  return compact('getblockcount','getconnectioncount','getblock','title');
+	  	return compact('getblockcount','getconnectioncount','getblock','title');
 	}
-
-	// public function sendfrom($key = null){
- //    	extract($this->request->data); 
-	    
-	//     	$COINGREEN = new COINGREEN('http://'.COINGREEN_WALLET_SERVER.':'.COINGREEN_WALLET_PORT,COINGREEN_WALLET_USERNAME,COINGREEN_WALLET_PASSWORD);	
-	//     	//var_dump($walletid,$greencoinaddress,(float)$amount,6,"donation","seans outpost");
-	//     	// echo $walletid." ".$greencoinaddress." ".(float)$amount;
-	//     	// exit();
-	// 	    $transaction = $COINGREEN->sendfrom($walletid,$greencoinaddress,(float)$amount,false);
-
-		    
- //  			return $this->render(array('json' => array('success'=>0,
- //          		'now'=>time(),
- //          		'result' => $transaction
- //          	)));
- //    }	
 
     public function sendcoin_BKP($key = null){
     	extract($this->request->data); 
@@ -420,17 +404,17 @@ class ApiController extends \lithium\action\Controller {
 	    	)));
 	    }
 
-	    if($payament==null || $payament == ""){
+	    if($amount==null || $amount == ""){
 	        return $this->render(array('json' => array('success'=>0,
 	        	'now'=>time(),
-	        	'error'=>'Payament missing!'
+	        	'error'=>'Amount missing!'
 	    	)));
 	    }
 
 	    if($ip==null || $ip == ""){
 	        return $this->render(array('json' => array('success'=>0,
 	        	'now'=>time(),
-	        	'error'=>'ip missing!'
+	        	'error'=>'Ip missing!'
 	    	)));
 	    }
 
@@ -449,7 +433,7 @@ class ApiController extends \lithium\action\Controller {
 	  			$data = array(
 			        'walletid'=>$walletid,
 			        'paymentid'=>$paymentid,
-			        'payament' => $payament,
+			        'amount' => $amount,
 			        'hash' => $record['hash'],
 			        'IP' => $ip,
 			    	'Server'=>md5($_SERVER["SERVER_ADDR"]),
@@ -458,22 +442,24 @@ class ApiController extends \lithium\action\Controller {
 			     );
 			     Orders::create()->save($data);
 
-			     ////////////////////////////////////////Send Email
-		          $payment = array(
-		           'walletid'=>$walletid,
-		           'paymentid'=>$paymentid
-		          );
-		          $function = new Functions();
-                  $compact = array('data'=>$payment);
-                  $from = array(NOREPLY => "noreply@".COMPANY_URL);
-                  $email = 'nilamsir@gmail.com';
-                  $function->sendEmailTo($email,$compact,'process','purchseCoin',"Purchase Coin Request Coin Transfer Wallet",$from,'','','',null);
+			    ////////////////////////////////////////Send Email
+		       
+		        // $payment = array(
+		        //   'walletid'=>$walletid,
+		        //   'paymentid'=>$paymentid
+		        // );
+		        // $function = new Functions();
+	            // $compact = array('data'=>$payment);
+	            // $from = array(NOREPLY => "noreply@".COMPANY_URL);
+	            // $email = 'nilamsir@gmail.com';
+	            // $function->sendEmailTo($email,$compact,'process','purchseCoin',"Purchase Coin Request Coin Transfer Wallet",$from,'','','',null);
+
 		        //////////////////////////////////////////////////////////////////////
 
 
 	  			return $this->render(array('json' => array('success'=>1,
 	          		'now'=>time(),
-	          		'result'=>'order history suceess',
+	          		'result'=>'Order history suceess',
 	        	)));
 	        }else{
 		    	return $this->render(array('json' => array('success'=>0,
@@ -542,17 +528,9 @@ class ApiController extends \lithium\action\Controller {
                     }    
 
                     $wallets[] = array(
-                      'record'=>0,
-		              'recordid'=> (string) $wallet['_id'],
-		              'walletid'=>$wallet['walletid'],
-		              'xwalletid'=>$wallet['xwalletid'],
-		              'secondpassword' => $record['secondpassword'],
 		              'email'=>$wallet['email'],
-		              'xemail'=>$wallet['xemail'],
 		              'phone'=>$wallet['phone'],
-		              'xphone'=>$wallet['xphone'],
-		              'code'=>$wallet['code'],
-		              'xcode'=>$wallet['xcode'],
+		              'code'=>$wallet['code']
                     );
                 }  
 	               	return $this->render(array('json' => array('success'=>1,
@@ -572,46 +550,7 @@ class ApiController extends \lithium\action\Controller {
             'error'=>'Invalid Key!'
             )));    
         }   
-     }
-
-
-   //  public function walletbackup_dump($key = null){
-   		//  	extract($this->request->data); 
-	    
-	  //   if($key==null || $key == ""){
-	  //       return $this->render(array('json' => array('success'=>0,
-	  //       	'now'=>time(),
-	  //       	'error'=>'Key missing!'
-	  //   	)));
-	  //   }
-
-	  //   $record = Apps::find('first',array(
-	   //        	'conditions' => array(
-	   //            		'key'=>$key,
-	   //            		'isdelete' => '0'
-	   //        		)
-	   //      	)
-	   //    	);
-	   
-	  	// 	if(count($record) > 0){
-	  	// 		$wallets = XGCUsers::find('first',array('conditions' => array('hash'=>$record['hash'])));
-		    	
-	  	// 		$COINGREEN = new COINGREEN('http://'.COINGREEN_WALLET_SERVER.':'.COINGREEN_WALLET_PORT,COINGREEN_WALLET_USERNAME,COINGREEN_WALLET_PASSWORD);
-	  
-				// $dump = $COINGREEN->dumpwallet(LITHIUM_APP_PATH.'/webroot/documents/w20180205.txt');
-
-
-		  //   	return $this->render(array('json' => array('success'=>1,
-	   //        		'now'=>time(),
-	   //        		'result'=>'suceess'
-	   //      	)));  	
-	  	// 	}else{
-	  	// 		return $this->render(array('json' => array('success'=>2,
-	   //        		'now'=>time(),
-	   //        		'error'=>'Invalid Key!'
-	   //      	)));
-	  	// 	}
-   //  }
+    }
 }
 
 ?>

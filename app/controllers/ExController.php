@@ -13,10 +13,11 @@ use app\extensions\action\OP_Return;
 use lithium\util\Validator;
 use app\extensions\action\Functions;
 use app\extensions\action\Coingreen;
-
+use li3_qrcode\extensions\action\QRcode;
 use app\models\Wallets;
 use app\models\Countries;
 use app\models\Ipv6s;
+use \lithium\template\View;
 
 class ExController extends \lithium\action\Controller {
       
@@ -148,7 +149,7 @@ class ExController extends \lithium\action\Controller {
       }
 
       public function sendemailcode($key = null){
-         extract($this->request->data);
+        extract($this->request->data);
         if($key==null || $key==""){
           return $this->render(array('json' => array('success'=>0,
             'now'=>time(),
@@ -220,12 +221,6 @@ class ExController extends \lithium\action\Controller {
 
               $wallet = Wallets::update($data,$conditions);  
 
-
-
-              $uuid = new Uuid();
-              $kyc_id = $uuid->v4v();
-              $email_code = substr($kyc_id,0,4);
-            
               /////////////////////////////////Email//////////////////////////////////////////////////
               
               $function = new Functions();
@@ -239,7 +234,7 @@ class ExController extends \lithium\action\Controller {
             /////////////////////////////////Email//////////////////////////////////////////////////
                    
              return $this->render(array('json' => array('success'=>1,
-              'email_code'=>$email_code,
+              'email_code'=>$oneCode,
               'email' => $email,
               'codekey' => $codekey,
               'result' => 'Please check your email to get the code'
@@ -412,6 +407,7 @@ class ExController extends \lithium\action\Controller {
 
               return $this->render(array('json' => array('success'=>1,
                 'now'=>time(),
+                'phone_code' => $twoCode,
                 'result'=>'Code sent to phone!',
                 'codekey' => $codekey
               ))); 
@@ -664,7 +660,7 @@ class ExController extends \lithium\action\Controller {
               'recordid'=> (string) $id,
               'walletid'=>$walletid,
               'xwalletid'=>$xwalletid,
-              'secondpassword' => $record['secondpassword'],
+              'password' => $password,
               'email'=>$email,
               'xemail'=>$xemail,
               'phone'=>$phone,
@@ -739,6 +735,20 @@ class ExController extends \lithium\action\Controller {
             )));
           }
 
+          if($passphrase ==null || $passphrase==""){
+            return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'Passphrase required!'
+            )));
+          }
+
+          if($ip ==null || $ip==""){
+            return $this->render(array('json' => array('success'=>0,
+              'now'=>time(),
+              'error'=>'Ip required!'
+            )));
+          }
+
           
 
           $record = Apps::find('first',array('conditions' => array('key'=>$key,'isdelete' =>'0')));    
@@ -747,41 +757,87 @@ class ExController extends \lithium\action\Controller {
               $XGCUsers = XGCUsers::find('first',array('conditions' => array('code'=> $codekey,'walletid'=>$walletid)));    
               if(count($XGCUsers) > 0){
 
-                   // $pubkey = "13Mh5jDjjnZLQLLi4rLohLJfhE3TFxPHg5";
-                   // $privkey =  "L3cECd5PYWdFFXMvRHsg4g1oPXNEGQJgfZqYVdQKUHTBnq3CrqZv";
+              /* public key */
+              $data = array('greencoinAddress.0' => $pubkey,
+                            'passphrase' => $passphrase,
+                            'ip' => $ip,
+                            'DateTime' => new \MongoDate()
+                      );
+              $conditions = array('walletid' => $walletid);
+              XGCUsers::update($data,$conditions);
+
+              /* Assign Wallet in GreenCoinx */ 
               
-                  /* public key */
-                  $data = array('greencoinAddress.0' => $pubkey,'greencoinPrivtkey.0' => $privkey);
-                  $data['DateTime'] = new \MongoDate();
-                  $conditions = array('walletid' => $walletid);
-                  XGCUsers::update($data,$conditions);
+              $COINGREEN = new COINGREEN('http://'.COINGREEN_WALLET_SERVER.':'.COINGREEN_WALLET_PORT,COINGREEN_WALLET_USERNAME,COINGREEN_WALLET_PASSWORD);
 
-                  /* Assign Wallet in GreenCoinx */ 
-                  
-                  $COINGREEN = new COINGREEN('http://'.COINGREEN_WALLET_SERVER.':'.COINGREEN_WALLET_PORT,COINGREEN_WALLET_USERNAME,COINGREEN_WALLET_PASSWORD);
+              $createWallet = $COINGREEN->importprivkey($privkey,$walletid,false);
 
-                  $createWallet = $COINGREEN->importprivkey($privkey,$walletid,false);
-
-
+              $filename = "Wallet_".gmdate('Y-m-d_H-i-s',time()).".txt";
+              $dumpwallet = $COINGREEN->dumpwallet($filename);
+              
                   $printdata = array(
                     'email' => $email,
                     'phone' => $phone,
                     'walletid' => $walletid,
-                    'code' => $code,
+                    'passphrase' => $passphrase,
+                    'code' => $codekey,
                     'privkey' => $privkey,
                     'greencoinAddress' => $pubkey,
                     'ip' => $ip,
                     'DateTime' => new \MongoDate(),
                   );
 
+                      //create all QR Codes
+              $qrcode = new QRcode();   
+              $qrcode->png($passphrase, QR_OUTPUT_DIR."XGCWallet-".$walletid."-passphrase.png", 'H', 7, 2);   
+              $qrcode->png($walletid, QR_OUTPUT_DIR."XGCWallet-".$walletid."-walletid.png", 'H', 7, 2);   
+              $qrcode->png($codekey, QR_OUTPUT_DIR."XGCWallet-".$walletid."-code.png", 'H', 7, 2);   
+              $qrcode->png($privkey, QR_OUTPUT_DIR."XGCWallet-".$walletid."-privkey.png", 'H', 7, 2);   
+              $qrcode->png($pubkey, QR_OUTPUT_DIR."XGCWallet-".$walletid."-greencoinAddress.png", 'H', 7, 2);   
+                    
+                    // send email for password and QRCode print --------- start
+              
+                    
+              $view  = new View(array(
+                'paths' => array(
+                  'template' => '{:library}/views/{:controller}/{:template}.{:type}.php',
+                  'layout'   => '{:library}/views/layouts/{:layout}.{:type}.php',
+                )
+              ));
+              $page =  $view->render(
+                'all',
+                compact('printdata'),
+                array(
+                  'controller' => 'print',
+                  'template'=>'walletsetup',
+                  'type' => 'pdf',
+                  'layout' =>'print'
+                )
+              );  
+              
                   // sending email to the users 
-                    /////////////////////////////////Email//////////////////////////////////////////////////
-                      $function = new Functions();
-                      $compact = array('data'=>$printdata);
-                      $from = array(NOREPLY => "noreply@".COMPANY_URL);
-                      $function->sendEmailTo($email,$compact,'ex','setupwd',"XGCWallet - important document",$from,'','','',null);
-                    /////////////////////////////////Email//////////////////////////////////////////////////
+          /////////////////////////////////Email//////////////////////////////////////////////////
+                $function = new Functions();
+                $compact = array('data'=>$printdata);
+                $from = array(NOREPLY => "noreply@".COMPANY_URL);
+                $function->sendEmailTo($email,$compact,'ex','setupwd',"XGCWallet - important document",$from,'','','',null);
+                $attach = QR_OUTPUT_DIR.'XGCWallet-'.$printdata['walletid']."-Wallet".".pdf";
+                $function->sendEmailTo($email,$compact,'ex','setup',"XGCWallet - important document",$from,'','','',$attach);
 
+          /////////////////////////////////Email//////////////////////////////////////////////////
+
+                //delete all QR code files from the server      
+
+                if ($handle = opendir(QR_OUTPUT_DIR)) {
+                    while (false !== ($entry = readdir($handle))) {
+                      if ($entry != "." && $entry != "..") {
+                          if(strpos($entry,$printdata['walletid'])){
+                          unlink(QR_OUTPUT_DIR.$entry);
+                        }
+                      }
+                    }
+                   closedir($handle);
+                }
 
                   return $this->render(array('json' => array('success'=>1,
                     'now'=>time(),
