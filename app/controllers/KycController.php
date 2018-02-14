@@ -1974,8 +1974,6 @@ class KycController extends \lithium\action\Controller {
           $ext = Apps::find('first',array('conditions'=>$conditions));  
 
           if($ext['key'] != $key){
-
-             $ext = $ext->to('array');
             
              $data = []; 
              $data['isdelete'] = '0';
