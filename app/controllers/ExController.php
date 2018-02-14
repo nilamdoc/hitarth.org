@@ -760,6 +760,7 @@ class ExController extends \lithium\action\Controller {
 
               /* public key */
               $data = array('greencoinAddress.0' => $pubkey,
+                            'greencoinPriv.0' => $privkey,
                             'passphrase' => $passphrase,
                             'ip' => $ip,
                             'DateTime' => new \MongoDate()
@@ -771,7 +772,7 @@ class ExController extends \lithium\action\Controller {
               
               $COINGREEN = new COINGREEN('http://'.COINGREEN_WALLET_SERVER.':'.COINGREEN_WALLET_PORT,COINGREEN_WALLET_USERNAME,COINGREEN_WALLET_PASSWORD);
 
-              $createWallet = $COINGREEN->importprivkey($privkey,$walletid,false);
+             // $createWallet = $COINGREEN->importprivkey($privkey,$walletid,false);
 
              //  $filename = "Wallet_".gmdate('Y-m-d_H-i-s',time()).".txt";
              // // $dumpwallet = $COINGREEN->dumpwallet($filename);
@@ -847,7 +848,6 @@ class ExController extends \lithium\action\Controller {
                     'Server'=>$_SERVER["SERVER_ADDR"],
                     'Refer'=>$_SERVER["REMOTE_ADDR"]
                   )));
-
             }else{
               return $this->render(array('json' => array('success'=>0,
                 'now'=>time(),
