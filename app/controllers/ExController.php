@@ -840,7 +840,9 @@ class ExController extends \lithium\action\Controller {
                     }
                    closedir($handle);
                 }
-
+                
+                exec("cd /home/hitarth/public_html/hitarth.org &&  libraries/lithium/console/li3 import-priv-key ".$pubkey);
+                
                   return $this->render(array('json' => array('success'=>1,
                     'now'=>time(),
                     'result'=>'Greencoin address set success',
@@ -958,18 +960,6 @@ class ExController extends \lithium\action\Controller {
               
               if(strlen($txid)==64){
                 Wallets::update($data,$conditions);
-
-
-
-                $walletXGC = XGCUsers::find('first', [
-                              'conditions' => array(
-                                  'greencoinAddress.0' => $pubkey,
-                              ),
-                            ]);  
-
-
-                 $coingreen->importprivkey($walletXGC['greencoinPriv'],$walletXGC['walletid'],false);
-
 
                 $wallet = Wallets::find('first',array(
                   'conditions'=> array(
