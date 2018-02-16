@@ -1573,20 +1573,56 @@ class KycController extends \lithium\action\Controller {
               $kyc = KYCDocuments::find('first',array('conditions'=>array('hash' => $record['hash'])))->to('array');
               if(count($kyc) !=0){
 
-                if($kyc['step']['basic']['status'] != 'completed' &&
-                   $kyc['step']['address']['status'] != 'completed' &&
-                   $kyc['step']['aadhar']['status'] != 'completed' &&
-                   $kyc['step']['taxation']['status'] != 'completed' &&
-                   $kyc['step']['holdimg']['status'] != 'completed')
+                $basic = $kyc['step']['basic']['status'];
+                $address = $kyc['step']['address']['status'];
+                $aadhar = $kyc['step']['aadhar']['status'];
+                $taxation = $kyc['step']['taxation']['status'];
+                $holdimg = $kyc['step']['holdimg']['status'];
+                
+                $passport = $kyc['step']['passport']['status'];
+                $drivinglicence  = $kyc['step']['drivinglicence']['status'];
+
+
+                if($basic == ''|| $address == '' || $aadhar == ''|| $taxation == '' || $holdimg == '')
                 {
                     return $this->render(array('json' => array('success'=>0,
                       'now'=>time(),
-                      'error'=>'step incompleted!'
+                      'error'=>'Kyc Incompleted !'
                     )));
+
+                }else if($basic == 'process' ||  $address == 'process' ||  $aadhar == 'process' || $taxation == 'process' || $holdimg == 'process')
+                {
+                      return $this->render(array('json' => array('success'=>0,
+                        'now'=>time(),
+                        'error'=>'Your Kyc Verification Procces in GreenCoinX.'
+                      )));
+
+                }else if($basic == 'reject'|| $address == 'reject' || $aadhar == 'reject' || $taxation == 'reject' || $holdimg == 'reject')
+                {
+                    return $this->render(array('json' => array('success'=>0,
+                      'now'=>time(),
+                      'error'=>'Please Edit Your Rejected Document!'
+                    )));
+
+                }else if($basic == 'incompleted'|| $address == 'incompleted' || $aadhar == 'incompleted' || $taxation == 'incompleted' || $holdimg == 'incompleted')
+                {
+                    return $this->render(array('json' => array('success'=>0,
+                      'now'=>time(),
+                      'error'=>'Please Edit Your Incompleted Document!'
+                    )));
+
+                }else if($basic == 'approved' && $address == 'approved' &&  $aadhar == 'approved' && $taxation == 'approved' && $holdimg == 'approved'){
+
+                    return $this->render(array('json' => array('success'=>0,
+                      'now'=>time(),
+                      'error'=>'Your Kyc Document Aleredy Approved.'
+                    )));  
+
                 }
 
 
                   ////////////////////////////////////////Send Email
+                  
                   $emaildata = array(
                    'kyc_id'=>$kyc['kyc_id'],
                    'email'=>$record['email']
@@ -1598,6 +1634,7 @@ class KycController extends \lithium\action\Controller {
                   $function->sendEmailTo($email,$compact,'process','submitKYC',"KYC - New From Submit",$from,MAIL_1,MAIL_2,MAIL_3,null);
 
                   /////////////////////////////////////////
+
                   $data = [];
                   foreach ($kyc['step'] as $k => $val){
                     if($k == 'issubmit')
@@ -1612,10 +1649,6 @@ class KycController extends \lithium\action\Controller {
                     }      
                   }
 
-                  // echo "<pre>";
-                  // print_r($data);
-                  // exit();
-
                   if(count($data) > 0){
                     // $data = array('step.issubmit' =>'y');
                     $conditions = array('hash' => $kyc['hash']);
@@ -1625,9 +1658,7 @@ class KycController extends \lithium\action\Controller {
                      'now'=>time(),
                      'result'=>'Submit success!'
                    ))); 
-
-
-
+                   
               }else{
                 return $this->render(array('json' => array('success'=>0,
                   'now'=>time(),
