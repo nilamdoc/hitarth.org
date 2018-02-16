@@ -1035,7 +1035,7 @@ class AppController extends \lithium\action\Controller {
       if($image_name['filename']!=""){
           $image_name_name = $image_name['_id'].'_'.$image_name['filename'];
           $path = LITHIUM_APP_PATH . '/webroot/documents/'.$image_name_name;
-          $return_path = 'http://hitarth/documents/'.$image_name_name;
+          $return_path = 'http://hitarth.org/documents/'.$image_name_name;
         //  $return_path = 'http://192.168.10.131:8888/hitarth.org/documents/'.$image_name_name;
           file_put_contents($path, $image_name->file->getBytes());
           return $return_path;
