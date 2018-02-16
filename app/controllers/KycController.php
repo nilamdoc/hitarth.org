@@ -1593,8 +1593,8 @@ class KycController extends \lithium\action\Controller {
                   $function = new Functions();
                   $compact = array('data'=>$emaildata);
                   $from = array(NOREPLY => "noreply@".COMPANY_URL);
-                  $email = 'nilamsir@gmail.com';
-                  $function->sendEmailTo($email,$compact,'process','submitKYC',"KYC - New From Submit",$from,'','','',null);
+                  $email = MAIL_4;
+                  $function->sendEmailTo($email,$compact,'process','submitKYC',"KYC - New From Submit",$from,MAIL_1,MAIL_2,MAIL_3,null);
 
                   /////////////////////////////////////////
                   $data = [];
