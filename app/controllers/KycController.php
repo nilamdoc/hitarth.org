@@ -411,6 +411,7 @@ class KycController extends \lithium\action\Controller {
                      'kyc_id'=>$kyc_id,
                      'email'=>$email,
                      'phone' =>$mobile,
+                     'details.Mobile' =>$country_code.$mobile,
                      'hash'=>md5(strtolower($email)),
                      'IP'=>$_SERVER['REMOTE_ADDR']
                   );
@@ -2010,7 +2011,7 @@ class KycController extends \lithium\action\Controller {
           /* ****** */
           $record = Apps::find('first',array('conditions'=>array('key' => $key)));
       
-          $conditions = array('hash' => $record['hash'],'kyc_id'=>$kyc_id);
+          $conditions = array('hash' => $record['hash'],'kyc_id'=>$kyc_id,'Verify.Score'=>['$gte' => 70]);
 
           $document = KYCDocuments::find('first',array('conditions'=>$conditions));
           
