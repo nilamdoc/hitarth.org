@@ -538,7 +538,7 @@ class KycController extends \lithium\action\Controller {
     }
 
     private function getKycBasic($key,$kyc){
-      $path = $this->send($kyc['hash'],'profile_img');
+      $path = $this->getImage($kyc['hash'],'profile_img');
       return $this->render(array('json' => array('success'=>1,
         'now'=>time(),
         'result' => 'Basic Information',
